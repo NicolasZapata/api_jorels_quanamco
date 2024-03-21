@@ -42,9 +42,9 @@ class Edi(models.Model):
         string="In production",
         copy=False,
         readonly=True,
-        default=lambda self: self.env["res.company"]
-        ._company_default_get()
-        .edi_payroll_is_not_test,
+    #     default=lambda self: self.env["res.company"]
+    #     ._company_default_get()
+    #     .edi_payroll_is_not_test,
     )
 
     # Edi fields
