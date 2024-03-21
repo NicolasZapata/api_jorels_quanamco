@@ -25,9 +25,9 @@ from odoo.exceptions import ValidationError
 
 
 class DeductionLine(models.Model):
-    _name = 'l10n_co_hr_payroll.deduction.line'
+    _name = 'payroll.deduction.line'
     _description = 'Deduction details'
-    _order = 'payslip_id, sequence'
+    # _order = 'payslip_id, sequence'
 
     name = fields.Char(string='Description', required=True)
     payslip_id = fields.Many2one('hr.payslip', string='Pay Slip', required=True, ondelete='cascade', index=True)
