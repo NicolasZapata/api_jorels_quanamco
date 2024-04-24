@@ -47,7 +47,6 @@ class HrPayslip(models.Model):
         states={"draft": [("readonly", False)]},
         copy=False,
     )
-
     # Edi fields
     date = fields.Date(
         "Date Account",
@@ -68,22 +67,22 @@ class HrPayslip(models.Model):
         "Others", currency_field="currency_id", readonly=True, copy=True
     )
     #Todo restore this code
-    # earn_ids = fields.One2many(
-    #     "l10n_co_hr_payroll.earn.line",
-    #     "payslip_id",
-    #     string="Earn lines",
-    #     readonly=True,
-    #     copy=True,
-    #     states={"draft": [("readonly", False)]},
-    # )
-    # deduction_ids = fields.One2many(
-    #     "l10n_co_hr_payroll.deduction.line",
-    #     "payslip_id",
-    #     string="Deduction lines",
-    #     copy=True,
-    #     readonly=True,
-    #     states={"draft": [("readonly", False)]},
-    # )
+    earn_ids = fields.One2many(
+        "l10n_co_hr_payroll.earn.line",
+        "payslip_id",
+        string="Earn lines",
+        readonly=True,
+        copy=True,
+        states={"draft": [("readonly", False)]},
+    )
+    deduction_ids = fields.One2many(
+        "l10n_co_hr_payroll.deduction.line",
+        "payslip_id",
+        string="Deduction lines",
+        copy=True,
+        readonly=True,
+        states={"draft": [("readonly", False)]},
+    )
     payslip_edi_ids = fields.Many2many(
         comodel_name="hr.payslip.edi",
         string="Edi Payslips",
@@ -91,7 +90,6 @@ class HrPayslip(models.Model):
         readonly=True,
         copy=False,
     )
-
     month = fields.Selection(
         [
             ("1", "January"),
@@ -131,18 +129,15 @@ class HrPayslip(models.Model):
         return fields.Datetime.to_string(date_hours)
 
     def compute_sheet(self):
-
         for rec in self:
             # Read all codes
             all_earn_code_list = []
             for earn_id in rec.earn_ids:
                 all_earn_code_list.append(earn_id.code)
-
             # Read all codes
             all_deduction_code_list = []
             for deduction_id in rec.deduction_ids:
                 all_deduction_code_list.append(deduction_id.code)
-
             # Remove records with codes duplicated
             earn_code_list = []
             [
@@ -150,7 +145,6 @@ class HrPayslip(models.Model):
                 for x in all_earn_code_list
                 if x not in earn_code_list
             ]
-
             # Remove records with codes duplicated
             deduction_code_list = []
             [
@@ -158,7 +152,6 @@ class HrPayslip(models.Model):
                 for x in all_deduction_code_list
                 if x not in deduction_code_list
             ]
-
             # List of all earn details
             earn_list = []
             for earn_id in rec.earn_ids:
@@ -173,7 +166,6 @@ class HrPayslip(models.Model):
                         "category": earn_id.category,
                     }
                 )
-
             # List of all deduction details
             deduction_list = []
             for deduction_id in rec.deduction_ids:
@@ -185,7 +177,6 @@ class HrPayslip(models.Model):
                         "amount": abs(deduction_id.amount),
                     }
                 )
-
             # Remove input line records with codes in earn and deduction code list
             input_line_list = []
             for input_line in rec.input_line_ids:
@@ -194,13 +185,11 @@ class HrPayslip(models.Model):
                     or input_line.code in deduction_code_list
                 ):
                     input_line_list.append((2, input_line.id))
-
             # Remove worked days line records with codes in earn code list
             worked_days_line_list = []
             for worked_days_line in rec.worked_days_line_ids:
                 if worked_days_line.code in earn_code_list:
                     worked_days_line_list.append((2, worked_days_line.id))
-
             # Prepare earn input lines
             for code in earn_code_list:
                 filter_list = list(filter(lambda x: x["code"] == code, earn_list))
@@ -211,9 +200,7 @@ class HrPayslip(models.Model):
                     amount += filter_item["amount"]
                     quantity += filter_item["quantity"]
                     total += filter_item["total"]
-
                 res_item = filter_list[0]
-
                 # Prepare input lines
                 input_line_list.append(
                     (
@@ -229,7 +216,6 @@ class HrPayslip(models.Model):
                         },
                     )
                 )
-
                 # Prepare worked days lines
                 if res_item["category"] in (
                     "vacation_common",
@@ -279,16 +265,13 @@ class HrPayslip(models.Model):
                             },
                         )
                     )
-
             # Prepare deduction input lines
             for code in deduction_code_list:
                 filter_list = list(filter(lambda x: x["code"] == code, deduction_list))
                 amount = 0
                 for filter_item in filter_list:
                     amount += filter_item["amount"]
-
                 res_item = filter_list[0]
-
                 input_line_list.append(
                     (
                         0,
@@ -303,18 +286,14 @@ class HrPayslip(models.Model):
                         },
                     )
                 )
-
             # Add lines
             rec.update({"input_line_ids": input_line_list})
             rec.update({"worked_days_line_ids": worked_days_line_list})
-
             # Sequences
             if not rec.number:
                 rec.number = _("New")
-
         res = super(HrPayslip, self).compute_sheet()
         self.compute_totals()
-
         # The sheet and the totals are calculated again,
         # just in case the totals obtained initially are used to calculate some salary rule.
         # Especially the field worked_days_total
@@ -330,19 +309,16 @@ class HrPayslip(models.Model):
             raise UserError(
                 "The system parameter 'jorels.payroll.recompute_sheet' is misconfigured. Use only 0 or 1"
             )
-
         return res
 
     def compute_totals(self):
         for rec in self:
             # The date is the sending date
             rec.date = fields.Date.context_today(self)
-
             # Totals
             accrued_total_amount = 0
             deductions_total_amount = 0
             others_total_amount = 0
-
             for line_id in rec.line_ids:
                 if line_id.salary_rule_id.type_concept == "earn":
                     if line_id.salary_rule_id.earn_category not in (
@@ -354,12 +330,10 @@ class HrPayslip(models.Model):
                     deductions_total_amount += abs(line_id.total)
                 elif line_id.salary_rule_id.type_concept == "other":
                     others_total_amount += abs(line_id.total)
-
             rec.accrued_total_amount = accrued_total_amount
             rec.deductions_total_amount = deductions_total_amount
             rec.others_total_amount = others_total_amount
             rec.total_amount = accrued_total_amount - deductions_total_amount
-
             rec.edi_payload = json.dumps(
                 rec.get_json_request(), indent=4, sort_keys=False
             )
@@ -368,7 +342,6 @@ class HrPayslip(models.Model):
     def calculate_time_worked(self, start, end):
         if end < start:
             raise ValidationError(_("The time worked cannot be negative."))
-
         end_day = (
             30 if end.day == calendar.monthrange(end.year, end.month)[1] else end.day
         )
@@ -377,7 +350,6 @@ class HrPayslip(models.Model):
             if start.day == calendar.monthrange(start.year, start.month)[1]
             else start.day
         )
-
         return (
             (end.year - start.year) * 360
             + (end.month - start.month) * 30
@@ -450,9 +422,7 @@ class HrPayslip(models.Model):
                 raise UserError(_("The payroll must have a payment method"))
             if not rec.payment_date:
                 raise UserError(_("The payroll must have a payment date"))
-
             rec.edi_sync = rec.company_id.edi_payroll_is_not_test
-
             sequence = {}
             if rec.number and rec.number not in ("New", _("New")):
                 sequence_number = "".join([i for i in rec.number if i.isdigit()])
@@ -465,13 +435,11 @@ class HrPayslip(models.Model):
                     }
                 else:
                     raise UserError(_("The sequence must have a prefix"))
-
             information = {
                 "payroll_period_code": rec.contract_id.payroll_period_id.id,
                 "currency_code": 35,
                 # "trm": 1
             }
-
             employer_id_code = rec.company_id.type_document_identification_id.id
             employer_id_number_general = "".join(
                 [i for i in rec.company_id.vat if i.isdigit()]
@@ -480,7 +448,6 @@ class HrPayslip(models.Model):
                 employer_id_number = employer_id_number_general[:-1]
             else:
                 employer_id_number = employer_id_number_general
-
             employer = {
                 "name": rec.company_id.name,
                 # "surname": "string",
@@ -493,7 +460,6 @@ class HrPayslip(models.Model):
                 "municipality_code": rec.company_id.partner_id.postal_municipality_id.id,
                 "address": rec.company_id.street,
             }
-
             employee = {
                 "type_worker_code": rec.contract_id.type_worker_id.id,
                 "subtype_worker_code": rec.contract_id.subtype_worker_id.id,
@@ -518,7 +484,6 @@ class HrPayslip(models.Model):
                 employee["second_surname"] = (
                     rec.employee_id.address_home_id.second_surname
                 )
-
             if rec.contract_id.date_end:
                 amount_time = self.calculate_time_worked(
                     rec.contract_id.date_start, rec.contract_id.date_end
@@ -527,9 +492,7 @@ class HrPayslip(models.Model):
                 amount_time = self.calculate_time_worked(
                     rec.contract_id.date_start, rec.date_to
                 )
-
             rec.date = fields.Date.context_today(rec)
-
             period = {
                 "admission_date": fields.Date.to_string(rec.contract_id.date_start),
                 "settlement_start_date": fields.Date.to_string(rec.date_from),
@@ -541,7 +504,6 @@ class HrPayslip(models.Model):
                 period["withdrawal_date"] = fields.Date.to_string(
                     rec.contract_id.date_end
                 )
-
             payment = {
                 "code": rec.payment_form_id.id,
                 "method_code": rec.payment_method_id.id,
@@ -549,7 +511,6 @@ class HrPayslip(models.Model):
                 # "account_type": "string",
                 # "account_number": "string"
             }
-
             # Earn details
             basic = {}
             company_withdrawal_bonus = 0
@@ -560,7 +521,6 @@ class HrPayslip(models.Model):
             refund = 0
             sustainment_support = 0
             telecommuting = 0
-
             advances = []
             assistances = []
             bonuses = []
@@ -578,7 +538,6 @@ class HrPayslip(models.Model):
             vacation_common = []
             vacation_compensated = []
             vouchers = []
-
             # Earn details iteration
             for earn_id in rec.earn_ids:
                 if not earn_id.rule_input_id.input_id.edi_is_detailed:
@@ -588,7 +547,6 @@ class HrPayslip(models.Model):
                         )
                         % earn_id.rule_input_id.input_id.name
                     )
-
                 if earn_id.category in (
                     "basic",
                     "company_withdrawal_bonus",
@@ -608,7 +566,6 @@ class HrPayslip(models.Model):
                         )
                         % earn_id.rule_input_id.input_id.name
                     )
-
                 if earn_id.category == "advances":
                     if earn_id.total:
                         advances.append({"payment": abs(earn_id.total)})
@@ -864,7 +821,6 @@ class HrPayslip(models.Model):
                 elif earn_id.category == "vouchers_salary_food":
                     if earn_id.total:
                         vouchers.append({"salary_food_payment": abs(earn_id.total)})
-
             # Deduction details
             deduction_afc = 0
             deduction_complementary_plans = 0
@@ -880,12 +836,10 @@ class HrPayslip(models.Model):
             deduction_trade_unions = {}
             deduction_voluntary_pension = 0
             deduction_withholding_source = 0
-
             deduction_advances = []
             deduction_libranzas = []
             deduction_others = []
             deduction_third_party_payments = []
-
             # Deduction details iteration
             for deduction_id in rec.deduction_ids:
                 if not deduction_id.rule_input_id.input_id.edi_is_detailed:
@@ -895,7 +849,6 @@ class HrPayslip(models.Model):
                         )
                         % deduction_id.rule_input_id.input_id.name
                     )
-
                 # For trade unions and sanctions this settings is temporary
                 if deduction_id.category in (
                     "afc",
@@ -940,7 +893,6 @@ class HrPayslip(models.Model):
                         deduction_third_party_payments.append(
                             {"payment": abs(deduction_id.amount)}
                         )
-
             # Salary computation iteration
             for line_id in rec.line_ids:
                 line_id.edi_rate = line_id.compute_edi_rate()
@@ -1321,7 +1273,6 @@ class HrPayslip(models.Model):
                         deduction_third_party_payments.append(
                             {"payment": abs(line_id.total)}
                         )
-
             # Calculate days worked
             rec.worked_days_total = self.calculate_time_worked(
                 rec.date_from, rec.date_to
@@ -1354,7 +1305,6 @@ class HrPayslip(models.Model):
                 vacation["compensated"] = vacation_compensated
             if vacation:
                 earn["vacation"] = vacation
-
             if primas:
                 if "payment" in primas:
                     earn["primas"] = primas
@@ -1362,7 +1312,6 @@ class HrPayslip(models.Model):
                     raise UserError(
                         _("The 'Primas' rule is mandatory in order to report Primas")
                     )
-
             if layoffs:
                 if ("payment" in layoffs) and ("interest_payment" in layoffs):
                     earn["layoffs"] = layoffs
@@ -1372,7 +1321,6 @@ class HrPayslip(models.Model):
                             "The 'Layoffs' and 'Layoffs interest' rules are mandatory in order to report Layoffs"
                         )
                     )
-
             licensings = {}
             if licensings_maternity_or_paternity_leaves:
                 licensings["licensings_maternity_or_paternity_leaves"] = (
@@ -1388,125 +1336,86 @@ class HrPayslip(models.Model):
                 )
             if licensings:
                 earn["licensings"] = licensings
-
             if endowment:
                 earn["endowment"] = endowment
-
             if sustainment_support:
                 earn["sustainment_support"] = sustainment_support
-
             if telecommuting:
                 earn["telecommuting"] = telecommuting
-
             if company_withdrawal_bonus:
                 earn["company_withdrawal_bonus"] = company_withdrawal_bonus
-
             if compensation:
                 earn["compensation"] = compensation
-
             if refund:
                 earn["refund"] = refund
-
             if transports:
                 earn["transports"] = transports
-
             if overtimes_surcharges:
                 earn["overtimes_surcharges"] = overtimes_surcharges
-
             if incapacities:
                 earn["incapacities"] = incapacities
-
             if bonuses:
                 earn["bonuses"] = bonuses
-
             if assistances:
                 earn["assistances"] = assistances
-
             if legal_strikes:
                 earn["legal_strikes"] = legal_strikes
-
             if other_concepts:
                 earn["other_concepts"] = other_concepts
-
             if compensations:
                 earn["compensations"] = compensations
-
             if vouchers:
                 earn["vouchers"] = vouchers
-
             if commissions:
                 earn["commissions"] = commissions
-
             if third_party_payments:
                 earn["third_party_payments"] = third_party_payments
-
             if advances:
                 earn["advances"] = advances
-
             # Deduction details
             deduction = {}
-
             if deduction_health:
                 deduction["health"] = deduction_health
-
             if deduction_pension_fund:
                 deduction["pension_fund"] = deduction_pension_fund
-
             if deduction_pension_security_fund:
                 deduction["pension_security_fund"] = deduction_pension_security_fund
-
             if deduction_voluntary_pension:
                 deduction["voluntary_pension"] = deduction_voluntary_pension
-
             if deduction_withholding_source:
                 deduction["withholding_source"] = deduction_withholding_source
-
             if deduction_afc:
                 deduction["afc"] = deduction_afc
-
             if deduction_cooperative:
                 deduction["cooperative"] = deduction_cooperative
-
             if deduction_tax_lien:
                 deduction["tax_lien"] = deduction_tax_lien
-
             if deduction_complementary_plans:
                 deduction["complementary_plans"] = deduction_complementary_plans
-
             if deduction_education:
                 deduction["education"] = deduction_education
-
             if deduction_refund:
                 deduction["refund"] = deduction_refund
-
             if deduction_debt:
                 deduction["debt"] = deduction_debt
-
             if deduction_trade_unions:
                 deduction["trade_unions"] = [deduction_trade_unions]
-
             if deduction_sanctions:
                 if "payment_public" not in deduction_sanctions:
                     deduction_sanctions["payment_public"] = 0.0
                 if "payment_private" not in deduction_sanctions:
                     deduction_sanctions["payment_private"] = 0.0
                 deduction["sanctions"] = [deduction_sanctions]
-
             if deduction_libranzas:
                 deduction["libranzas"] = deduction_libranzas
-
             if deduction_third_party_payments:
                 deduction["third_party_payments"] = deduction_third_party_payments
-
             if deduction_advances:
                 deduction["advances"] = deduction_advances
-
             if deduction_others:
                 deduction["other_deductions"] = deduction_others
-
             # Payment
             payment_dates = [{"date": fields.Date.to_string(rec.payment_date)}]
-
             json_request = {}
             json_request["sync"] = rec.edi_sync
             # json_request["rounding"] = 0
@@ -1524,15 +1433,12 @@ class HrPayslip(models.Model):
             json_request["payment"] = payment
             json_request["payment_dates"] = payment_dates
             json_request["earn"] = earn
-
             # Optionals
             if deduction:
                 json_request["deduction"] = deduction
-
             if rec.note:
                 notes = [{"text": rec.note}]
                 json_request["notes"] = notes
-
             # Credit note
             if rec.credit_note:
                 if rec.origin_payslip_id:
@@ -1551,9 +1457,7 @@ class HrPayslip(models.Model):
                     raise UserError(
                         _("The Origin payslip is required for adjusment notes.")
                     )
-
                 json_request = rec.get_json_delete_request(json_request)
-
             return json_request
 
     def validate_dian_generic(self):
@@ -1563,7 +1467,6 @@ class HrPayslip(models.Model):
                 or rec.company_id.edi_payroll_consolidated_enable
             ):
                 continue
-
             requests_data = rec.get_json_request()
             rec._validate_dian_generic(requests_data)
 
@@ -1586,9 +1489,7 @@ class HrPayslip(models.Model):
                         )
                 else:
                     rec.number = self.env["ir.sequence"].next_by_code("salary.slip")
-
         res = super(HrPayslip, self).action_payslip_done()
-
         for rec in self:
             if (
                 rec.company_id.edi_payroll_enable
@@ -1596,7 +1497,6 @@ class HrPayslip(models.Model):
                 and not rec.company_id.edi_payroll_enable_validate_state
             ):
                 rec.validate_dian_generic()
-
         return res
 
     def status_zip(self):
@@ -1606,7 +1506,6 @@ class HrPayslip(models.Model):
                 or rec.company_id.edi_payroll_consolidated_enable
             ):
                 continue
-
             # This line ensures that the electronic fields of the payroll are updated in Odoo, before the request
             payload = json.dumps(rec.get_json_request(), indent=2, sort_keys=False)
             rec._status_zip(payload)
@@ -1621,7 +1520,6 @@ class HrPayslip(models.Model):
                 raise UserError(
                     _("A adjustment note should not be made to a adjustment note")
                 )
-
             copied_payslip = payslip.copy(
                 {
                     "credit_note": True,
@@ -1634,21 +1532,17 @@ class HrPayslip(models.Model):
             # so that the accounting of the adjustment notes works well.
             copied_payslip.compute_sheet()
             copied_payslip.action_payslip_done()
-
             if payslip.edi_payload and not copied_payslip.edi_payload:
                 payload = copied_payslip.get_json_request()
                 copied_payslip.write(
                     {"edi_payload": json.dumps(payload, indent=2, sort_keys=False)}
                 )
-
         formview_ref = self.env.ref("hr_payroll_community.view_hr_payslip_form", False)
         treeview_ref = self.env.ref("hr_payroll_community.view_hr_payslip_tree", False)
-
         if copied_payslip is not None:
             domain = "[('id', 'in', %s)]" % copied_payslip.ids
         else:
             domain = "[(credit_note, '=', True)]"
-
         return {
             "name": ("Refund Payslip"),
             "view_mode": "tree, form",
@@ -1671,7 +1565,6 @@ class HrPayslip(models.Model):
                 or rec.company_id.edi_payroll_consolidated_enable
             ):
                 continue
-
             # This line ensures that the electronic fields of the payroll are updated in Odoo,
             # before the request
             payload = rec.get_json_request()

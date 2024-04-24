@@ -42,9 +42,9 @@ class Edi(models.Model):
         string="In production",
         copy=False,
         readonly=True,
-    #     default=lambda self: self.env["res.company"]
-    #     ._company_default_get()
-    #     .edi_payroll_is_not_test,
+        #     default=lambda self: self.env["res.company"]
+        #     ._company_default_get()
+        #     .edi_payroll_is_not_test,
     )
 
     # Edi fields
@@ -167,23 +167,58 @@ class Edi(models.Model):
             rec.currency_id = rec.company_id.currency_id
 
     def dian_preview(self):
+        """
+        Generates a URL to preview the document on the DIAN
+        (Dirección de Impuestos y Aduanas Nacionales) website.
+
+        The DIAN is the Colombian government agency responsible
+        for managing taxes and customs. This method constructs a URL
+        that allows the user to view the document details on the DIAN
+        website using the document's unique identifier (edi_uuid).
+
+        Returns:
+            dict: A dictionary containing the action type ('ir.actions.act_url'),
+            target ('new'), and the constructed URL.
+                The URL is formed by appending the document's edi_uuid to a base URL
+                provided by the DIAN.
+
+        """
         for rec in self:
+            # Iterate over the records (self is likely a recordset)
             if rec.edi_uuid:
+                # Check if the record has a valid edi_uuid
                 return {
-                    "type": "ir.actions.act_url",
-                    "target": "new",
+                    "type": "ir.actions.act_url",  # Action type to open a URL
+                    "target": "new",  # Open the URL in a new window or tab
                     "url": "https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey="
-                    + rec.edi_uuid,
+                    + rec.edi_uuid,  # Construct the URL with the document's edi_uuid
                 }
 
     def dian_pdf_view(self):
+        """
+        Generate a URL to download the PDF version of the document from the DIAN
+        (Dirección de Impuestos y Aduanas Nacionales) website. 🪙
+
+        The DIAN is the Colombian government agency responsible for managing
+        taxes and customs. This method constructs a URL that allows
+        the user to download the PDF version of the document from the DIAN website
+        using the document's unique identifier (edi_uuid).
+
+        Returns:
+            dict: A dictionary containing the action type ('ir.actions.act_url'),
+            target ('new'), and the constructed URL.
+                The URL is formed by appending the document's edi_uuid to a base URL
+                provided by the DIAN for downloading the PDF version of the document.
+        """
         for rec in self:
+            # Iterate over the records (self is likely a recordset)
             if rec.edi_uuid:
+                # Check if the record has a valid edi_uuid
                 return {
-                    "type": "ir.actions.act_url",
-                    "target": "new",
+                    "type": "ir.actions.act_url",  # Action type to open a URL
+                    "target": "new",  # Open the URL in a new window or tab
                     "url": "https://catalogo-vpfe.dian.gov.co/Document/DownloadPayrollPDF/"
-                    + rec.edi_uuid,
+                    + rec.edi_uuid,  # Construct the URL with the document's edi_uuid
                 }
 
     @api.depends("edi_payload")
@@ -203,29 +238,42 @@ class Edi(models.Model):
 
     @api.model
     def join_dicts(self, a, b, date_issue):
+        """
+        Merge two dictionaries 'a' and 'b' containing payroll information, 
+        preserving the order of the periods.
+
+        This takes two dictionaries 'a' and 'b', and a 'date_issue' string. 
+        It merges the dictionaries by summing or appending their values based on 
+        the keys present. The resulting dictionary is returned with the merged data,
+        preserving the order of the periods based on the 'settlement_start_date' key.
+
+        Args:
+            a (dict): The first dictionary containing payroll information.
+            b (dict): The second dictionary containing payroll information.
+            date_issue (str): The issue date for the merged dictionary.
+
+        Returns:
+            dict: The merged dictionary containing the combined payroll information.
+        """
+        # Determine the order of the dictionaries based on the 'settlement_start_date' key
         if dt.datetime.strptime(
             a["period"]["settlement_start_date"], "%Y-%m-%d"
         ) < dt.datetime.strptime(b["period"]["settlement_start_date"], "%Y-%m-%d"):
             first, last = deepcopy(a), deepcopy(b)
         else:
             first, last = deepcopy(b), deepcopy(a)
-
-        # Root
+        # Root level keys
         self.dict_root_sum(first, last, ["accrued_total", "deductions_total", "total"])
-
         self.dict_root_append_lists(first, last, ["notes", "payment_dates"])
-
-        # Sequence
+        # Sequence key
         if "sequence" in last:
             last.pop("sequence")
-
-        # Period
+        # Period key
         self.dict_root_merge(
             first["period"], last["period"], ["admission_date", "settlement_start_date"]
         )
         last["period"]["date_issue"] = date_issue
-
-        # Earn
+        # Earn key
         self.dict_root_sum(
             first["earn"],
             last["earn"],
@@ -250,11 +298,9 @@ class Edi(models.Model):
             ["payment", "interest_payment"],
             ["percentage"],
         )
-
         self.dict_root_append_dicts(
             first["earn"], last["earn"], ["vacation", "licensings"]
         )
-
         self.dict_root_append_lists(
             first["earn"],
             last["earn"],
@@ -273,8 +319,7 @@ class Edi(models.Model):
                 "advances",
             ],
         )
-
-        # Deduction
+        # Deduction key
         self.dict_sum_1(
             first,
             last,
@@ -303,7 +348,6 @@ class Edi(models.Model):
             ["payment", "payment_subsistence"],
             ["percentage", "percentage_subsistence"],
         )
-
         self.dict_append_lists_1(
             first,
             last,
@@ -317,11 +361,26 @@ class Edi(models.Model):
                 "other_deductions",
             ],
         )
-
         return last
 
     def write_response(self, response, payload):
+        """
+        Update the record with the response data received from the DIAN
+        (Dirección de Impuestos y Aduanas Nacionales).
+
+        This method takes two arguments: `response`
+        (a dictionary containing the response data from the DIAN)
+        and `payload` (the original payload sent to the DIAN).
+        It iterates over the records (`self` is likely a recordset)
+        and updates various fields with the corresponding
+        values from the `response` dictionary.
+
+        Args:
+            response (dict): A dictionary containing the response data received from the DIAN.
+            payload (dict): The original payload sent to the DIAN.
+        """
         for rec in self:
+            # Update the fields with the corresponding values from the response dictionary
             rec.edi_is_valid = response["is_valid"]
             rec.edi_is_restored = response["is_restored"]
             rec.edi_algorithm = response["algorithm"]
@@ -357,24 +416,40 @@ class Edi(models.Model):
 
     @api.model
     def get_json_delete_request(self, requests_data):
-        requests_delete = {}
+        """
+        Create a dictionary with the necessary data for a delete request
+        to the DIAN (Dirección de Impuestos y Aduanas Nacionales).
 
+        This method takes a dictionary `requests_data` containing
+        various fields related to the delete request and constructs
+        a new dictionary `requests_delete` with the relevant fields
+        required for the delete request.
+
+        Args:
+            requests_data (dict): A dictionary containing the
+            data for the delete request.
+
+        Returns:
+            dict: A dictionary `requests_delete` containing the
+            necessary fields for the delete request.
+        """
+        requests_delete = (
+            {}
+        )  # Initialize an empty dictionary to store the delete request data
+        # Copy the relevant fields from requests_data to requests_delete
         if "sequence" in requests_data:
             requests_delete["sequence"] = requests_data["sequence"]
         if "payroll_reference" in requests_data:
             requests_delete["payroll_reference"] = requests_data["payroll_reference"]
-
         requests_delete["sync"] = requests_data["sync"]
         requests_delete["information"] = requests_data["information"]
         requests_delete["employer"] = requests_data["employer"]
-
         if "rounding" in requests_data:
             requests_delete["rounding"] = requests_data["rounding"]
         if "provider" in requests_data:
             requests_delete["provider"] = requests_data["provider"]
         if "notes" in requests_data:
             requests_delete["notes"] = requests_data["notes"]
-
         return requests_delete
 
     def _validate_dian_generic(self, requests_data):
@@ -382,7 +457,6 @@ class Edi(models.Model):
             try:
                 if "sequence" not in requests_data:
                     raise UserError(_("The sequence is required."))
-
                 # Credit note
                 if rec.credit_note:
                     type_edi_document = "payroll_delete"
@@ -393,10 +467,8 @@ class Edi(models.Model):
                         raise UserError(_("The reference payroll is not valid."))
                 else:
                     type_edi_document = "payroll"
-
                 # Payload
                 payload = json.dumps(requests_data, indent=2, sort_keys=False)
-
                 # Software id and pin
                 if rec.company_id.edi_payroll_id and rec.company_id.edi_payroll_pin:
                     requests_data["environment"] = {
@@ -407,13 +479,11 @@ class Edi(models.Model):
                     raise UserError(
                         _("You do not have a software id and pin configured")
                     )
-
                 # API key and URL
                 if rec.company_id.api_key:
                     token = rec.company_id.api_key
                 else:
                     raise UserError(_("You must configure a token"))
-
                 api_url = (
                     self.env["ir.config_parameter"]
                     .sudo()
@@ -424,30 +494,24 @@ class Edi(models.Model):
                     "accept": "application/json",
                     "Content-Type": "application/json",
                 }
-
                 # Request
                 api_url = api_url + "/" + type_edi_document
-
                 rec.edi_is_not_test = rec.company_id.edi_payroll_is_not_test
-
                 if not rec.edi_is_not_test:
                     if rec.company_id.edi_payroll_test_set_id:
                         params["test_set_id"] = rec.company_id.edi_payroll_test_set_id
                     else:
                         raise UserError(_("You have not configured a 'TestSetId'."))
-
                 _logger.debug("API URL: %s", api_url)
                 _logger.debug(
                     "DIAN Validation Request: %s",
                     json.dumps(requests_data, indent=2, sort_keys=False),
                 )
                 # raise Warning(json.dumps(requests_data, indent=2, sort_keys=False))
-
                 response = requests.post(
                     api_url, json.dumps(requests_data), headers=header, params=params
                 ).json()
                 _logger.debug("API Response: %s", response)
-
                 if "detail" in response:
                     raise UserError(response["detail"])
                 if "message" in response:
@@ -506,47 +570,55 @@ class Edi(models.Model):
                     )
 
     def _status_zip(self, payload):
+        """
+        Check the status of a document with DIAN 
+        (Colombian tax authority) using the EDIPO API.
+
+        Args:
+            self: The current object instance.
+            payload: The payload data to be sent with the request.
+
+        Raises:
+            UserError: If there is an issue with the request or response.
+        """
         for rec in self:
             try:
                 _logger.debug("Payload: %s", payload)
-
                 if rec.edi_zip_key or rec.edi_uuid:
+                    # Prepare request data
                     requests_data = {}
                     _logger.debug("API Requests: %s", requests_data)
-
-                    # API key and URL
+                    
+                    # Get API key and URL
                     if rec.company_id.api_key:
                         token = rec.company_id.api_key
                     else:
                         raise UserError(_("You must configure a token"))
-
                     api_url = (
                         self.env["ir.config_parameter"]
                         .sudo()
                         .get_param("jorels.edipo.api_url", "https://edipo.jorels.com")
                     )
-
+                    # Set environment parameter
                     rec.edi_is_not_test = (
                         rec.edi_is_not_test or rec.company_id.edi_payroll_is_not_test
                     )
-
                     params = {
                         "token": token,
                         "environment": 1 if rec.edi_is_not_test else 2,
                     }
+                    # Set request headers
                     header = {
                         "accept": "application/json",
                         "Content-Type": "application/json",
                     }
-
-                    # Request
+                    # Construct API URL based on zip key or UUID
                     if rec.edi_zip_key:
                         api_url = api_url + "/zip/" + rec.edi_zip_key
                     else:
                         api_url = api_url + "/document/" + rec.edi_uuid
-
                     _logger.debug("API URL: %s", api_url)
-
+                    # Make the API request
                     response = requests.post(
                         api_url,
                         json.dumps(requests_data),
@@ -554,7 +626,7 @@ class Edi(models.Model):
                         params=params,
                     ).json()
                     _logger.debug("API Response: %s", response)
-
+                    # Process the API response
                     if "detail" in response:
                         raise UserError(response["detail"])
                     if "message" in response:
@@ -575,7 +647,6 @@ class Edi(models.Model):
                     elif "is_valid" in response:
                         rec.write_response(response, payload)
                         if response["is_valid"]:
-                            # self.env.user.notify_success(message=_("The validation at DIAN has been successful."))
                             _logger.debug("The validation at DIAN has been successful.")
                         elif "zip_key" in response or "uuid" in response:
                             if (
@@ -583,7 +654,6 @@ class Edi(models.Model):
                                 or response["uuid"] is not None
                             ):
                                 if not rec.edi_is_not_test:
-                                    # self.env.user.notify_success(message=_("Document sent to DIAN in testing."))
                                     _logger.debug("Document sent to DIAN in testing.")
                                 else:
                                     temp_message = {
@@ -595,9 +665,7 @@ class Edi(models.Model):
                                     raise UserError(str(temp_message))
                             else:
                                 raise UserError(
-                                    _(
-                                        "A valid Zip key or UUID was not obtained. Try again."
-                                    )
+                                    _("A valid Zip key or UUID was not obtained. Try again.")
                                 )
                         else:
                             raise UserError(
@@ -609,11 +677,8 @@ class Edi(models.Model):
                         )
                 else:
                     raise UserError(
-                        _(
-                            "A zip key or UUID is required to check the status of the document."
-                        )
+                        _("A zip key or UUID is required to check the status of the document.")
                     )
-
             except Exception as e:
                 _logger.debug("Failed to process the request: %s", e)
                 raise UserError(_("Failed to process the request: %s") % e)
@@ -622,20 +687,16 @@ class Edi(models.Model):
         for rec in self:
             try:
                 _logger.debug("Payload data: %s", payload)
-
                 sequence_prefix = payload["sequence"]["prefix"]
                 sequence_number = payload["sequence"]["number"]
                 sequence_formatted = sequence_prefix + str(sequence_number)
-
                 if sequence_formatted:
                     requests_data = {}
                     _logger.debug("API Requests: %s", requests_data)
-
                     if rec.company_id.api_key:
                         token = rec.company_id.api_key
                     else:
                         raise UserError(_("You must configure a token"))
-
                     api_url = (
                         self.env["ir.config_parameter"]
                         .sudo()
@@ -646,11 +707,8 @@ class Edi(models.Model):
                         "accept": "application/json",
                         "Content-Type": "application/json",
                     }
-
                     api_url = api_url + "/logs/" + sequence_formatted
-
                     _logger.debug("API URL: %s", api_url)
-
                     response = requests.post(
                         api_url,
                         json.dumps(requests_data),
@@ -658,7 +716,6 @@ class Edi(models.Model):
                         params=params,
                     ).json()
                     _logger.debug("API Response: %s", response)
-
                     if "detail" in response:
                         raise UserError(response["detail"])
                     if "message" in response:
@@ -666,19 +723,15 @@ class Edi(models.Model):
                             response["message"] == "Unauthenticated."
                             or response["message"] == ""
                         ):
-                            # self.env.user.notify_warning(message=_("Authentication error with the API"))
                             _logger.debug("Authentication error with the API")
                         else:
                             if "errors" in response:
-                                # self.env.user.notify_warning(
-                                #     message=response['message'] + '/ errors: ' + str(response['errors']))
                                 _logger.debug(
                                     response["message"]
                                     + "/ errors: "
                                     + str(response["errors"])
                                 )
                             else:
-                                # self.env.user.notify_warning(message=response['message'])
                                 _logger.debug(response["message"])
                     elif response and ("is_valid" in response[0]):
                         success = False
@@ -688,22 +741,16 @@ class Edi(models.Model):
                                 success = True
                                 break
                         if success:
-                            # self.env.user.notify_info(message=_("Validation in DIAN has been successful."))
                             _logger.debug("Validation in DIAN has been successful.")
                         else:
-                            # self.env.user.notify_warning(message=_("The document has not been validated."))
                             _logger.debug("The document has not been validated.")
                     else:
-                        # self.env.user.notify_warning(message=_("The document could not be consulted."))
                         _logger.debug("The document could not be consulted.")
                 else:
-                    # self.env.user.notify_warning(
-                    #     message=_("A number is required to verify the status of the document."))
                     _logger.debug(
                         "A number is required to verify the status of the document."
                     )
             except Exception as e:
-                # self.env.user.notify_warning(message=_("Failed to process the request"))
                 _logger.debug("Failed to process the request: %s", e)
 
     @api.model
@@ -923,7 +970,6 @@ class Edi(models.Model):
             "_payroll_reference": _("Reference"),
             "issue_date": _("Issue date"),
         }
-
         if field_name in field_names:
             return field_names[field_name]
         elif key in field_names:
@@ -981,7 +1027,6 @@ class Edi(models.Model):
         if output_temp != "<table class='o_group o_inner_group o_group_col_12'><tbody>":
             output_temp += "</tbody></table><br/><br/>"
             output += output_temp
-
         for key, value in payload.items():
             field_name = title + "_" + key
             if type(value) == dict:
@@ -997,7 +1042,6 @@ class Edi(models.Model):
                     + ">"
                 )
                 output += self.payload2html(value, tab + 1, field_name)
-
         for key, value in payload.items():
             field_name = title + "_" + key
             if type(value) == list:

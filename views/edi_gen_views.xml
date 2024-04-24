@@ -33,21 +33,27 @@
         <field name="arch" type="xml">
             <form string="Generate Edi Payslips">
                 <group name="main">
-                    <field name="month"/>
-                    <field name="year"/>
+                    <field name="month" />
+                    <field name="year" />
                 </group>
                 <footer>
-                    <button name="generate" type="object"
-                            string="Generate" class="oe_highlight"/>
-                    <button special="cancel" string="Cancel"/>
+                    <button
+                        name="generate"
+                        type="object"
+                        string="Generate"
+                        class="oe_highlight"
+                    />
+                    <button special="cancel" string="Cancel" />
                 </footer>
             </form>
         </field>
     </record>
 
-    <menuitem action="action_view_hr_payslip_edi_generate"
-              id="menu_payslip_edi_generate_wizard"
-              name="Generate Edi Payslips"
-              parent="l10n_co_hr_payroll.menu_payslip_edi"
-              groups="hr_payroll_community.group_hr_payroll_community_user"/>
+    <menuitem
+        action="action_view_hr_payslip_edi_generate"
+        id="menu_payslip_edi_generate_wizard"
+        name="Generate Edi Payslips"
+        parent="payroll.hr_payslip_run_menu"
+        groups="payroll.group_payroll_user"
+    />
 </odoo>
