@@ -54,7 +54,6 @@ class EdiGen(models.TransientModel):
         required=True,
         default=lambda self: fields.Date.context_today(self).year,
     )
-
     # It only works for one contract per employee.
     # If an employee's payroll has multiple contracts, then the generated payroll will grab the last contract it finds.
     def generate(self):
@@ -71,7 +70,6 @@ class EdiGen(models.TransientModel):
                 ("state", "=", "done"),
             ]
         )
-
         # Existing Credit notes
         credit_note_recs = payslip_env.search(
             [
@@ -82,7 +80,6 @@ class EdiGen(models.TransientModel):
                 ("state", "=", "done"),
             ]
         )
-
         # Filtered valid Payslips
         origin_payslip_list = []
         for credit_note_rec in credit_note_recs:
@@ -90,7 +87,6 @@ class EdiGen(models.TransientModel):
         valid_payslips = payslip_recs.filtered(
             lambda payslip: payslip.id not in origin_payslip_list
         )
-
         # Delete existing Edi Payslips in draft state
         for_delete_edi_payslip_recs = edi_payslip_env.search(
             [
@@ -100,7 +96,6 @@ class EdiGen(models.TransientModel):
             ]
         )
         for_delete_edi_payslip_recs.unlink()
-
         # Creating new Edi Payslips in draft state without payslips
         for valid_payslip in valid_payslips:
             existing_edi_payslip_recs = edi_payslip_env.search(
@@ -118,9 +113,7 @@ class EdiGen(models.TransientModel):
                         "employee_id": valid_payslip.employee_id.id,
                     }
                 )
-
         # Adding Payslips to Edi Payslips
-
         # Search for existing Edi Payslips in draft state
         existing_edi_payslip_recs = edi_payslip_env.search(
             [
@@ -147,7 +140,6 @@ class EdiGen(models.TransientModel):
                         "contract_id": valid_payslip_employee.contract_id.id,
                     }
                 )
-
         # To update or redirect to the Edi Payslip view
         return {
             "name": "Edi Payslips",
