@@ -1,10 +1,12 @@
-from . import listings
-from . import deduction_line
-from . import edi
-from . import edi_gen
-from . import hr_contract
-from . import hr_payslip
-from . import hr_payslip_edi
-from . import hr_salary_rule
-from . import res_company
-from . import res_config_settings
+from . import (
+    listings,
+    deduction_line,
+    edi,
+    edi_gen,
+    hr_contract,
+    hr_payslip,
+    hr_payslip_edi,
+    hr_salary_rule,
+    res_company,
+    res_config_settings,
+)

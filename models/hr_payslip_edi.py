@@ -150,22 +150,23 @@ class HrPayslipEdi(models.Model):
     @api.depends("employee_id", "month", "year")
     def _compute_name(self):
         """
-        Compute the name of the payslip based on the employee, month, and year.
-
-        This function is triggered whenever the fields "employee_id",
-        "month", or "year" are changed.
-        It sets the "name" field of the current record to a formatted string
-        that includes the employee's name and the month and year of the payslip.
-
-        Parameters:
-            self (Recordset): The current recordset.
+        Compute the name of the payslip by combining the name of the employee,
+        the month and the year.
         """
         for rec in self:
+            # Check if all the necessary fields are present
             if (not rec.employee_id) or (not rec.month) or (not rec.year):
                 return
+
+            # Get the necessary fields
             employee = rec.employee_id
             date_ym = dt.date(rec.year, int(rec.month), 1)
+
+            # Get the locale from the context, default to "en_US" if not present
             locale = self.env.context.get("lang") or "en_US"
+
+            # Format the name of the payslip using the employee's name,
+            # the month and the year
             rec.name = _("Salary Slip of %s for %s") % (
                 employee.name,
                 tools.ustr(
@@ -205,16 +206,35 @@ class HrPayslipEdi(models.Model):
         return True
 
     def action_payslip_cancel(self):
+        """
+        Cancels the current recordset.
+
+        This function iterates over each record in the current recordset and performs the following actions:
+        1. Checks if the record's edi_is_valid flag is False. If it is, the record's state is set to "cancel".
+        2. If the record's edi_is_valid flag is True, a UserError is raised with the message
+        "You cannot cancel a electronic payroll that has already been validated to the DIAN".
+
+        Parameters:
+            self (Recordset): The current recordset.
+
+        Returns:
+            bool: True if the action is successful, False otherwise.
+        """
         for rec in self:
+            # Check if the payslip has been validated to the DIAN
             if not rec.edi_is_valid:
+                # If not, set the state to cancel
                 rec.write({"state": "cancel"})
             else:
+                # If the payslip has been validated to the DIAN, raise an error
                 raise UserError(
                     _(
                         "You cannot cancel a electronic payroll that has already been validated to the DIAN"
                     )
                 )
+        # Return True if all records were cancelled successfully
         return True
+
 
     def compute_sheet(self):
         """
@@ -331,7 +351,6 @@ class HrPayslipEdi(models.Model):
                 raise UserError(_("The payroll must have a month"))
             if not rec.year:
                 raise UserError(_("The payroll must have a year"))
-
             sequence = {}
             if rec.number and rec.number not in ("New", _("New")):
                 sequence_number = "".join([i for i in rec.number if i.isdigit()])
@@ -392,9 +411,7 @@ class HrPayslipEdi(models.Model):
                     raise UserError(
                         _("The Origin payslip is required for adjusment notes.")
                     )
-
                 json_request = rec.get_json_delete_request(json_request)
-
             return json_request
 
     def validate_dian_generic(self):
@@ -424,6 +441,17 @@ class HrPayslipEdi(models.Model):
             rec._validate_dian_generic(requests_data)
 
     def validate_dian(self):
+        """
+        Validates the DIAN payroll for the current record.
+
+        This function iterates over each record in the current 
+        object and checks if the state is "done".
+        If the state is "done", the function calls the 
+        "validate_dian_generic" method of the current record.
+
+        Parameters:
+        - self: The current object.
+        """
         for rec in self:
             if rec.state == "done":
                 rec.validate_dian_generic()
@@ -460,7 +488,6 @@ class HrPayslipEdi(models.Model):
             if not self.env.context.get("without_compute_sheet"):
                 rec.compute_sheet()
             rec.write({"state": "done"})
-
             if (
                 rec.company_id.edi_payroll_enable
                 and rec.company_id.edi_payroll_consolidated_enable
@@ -486,8 +513,8 @@ class HrPayslipEdi(models.Model):
                 or not rec.company_id.edi_payroll_consolidated_enable
             ):
                 continue
-
-            # This line ensures that the electronic fields of the payroll are updated in Odoo, before the request
+            # This line ensures that the electronic fields of the payroll are 
+            # updated in Odoo, before the request
             payload = json.dumps(rec.get_json_request(), indent=2, sort_keys=False)
             rec._status_zip(payload)
 
@@ -524,7 +551,7 @@ class HrPayslipEdi(models.Model):
         - self: The object instance.
 
         Returns:
-        An action window dictionary.
+        - An action window dictionary.
         """
         refund_payslip = None
         for payslip in self:
@@ -591,7 +618,7 @@ class HrPayslipEdi(models.Model):
                 or not rec.company_id.edi_payroll_consolidated_enable
             ):
                 continue
-            # This line ensures that the electronic fields of the payroll are updated in Odoo,
-            # before the request
+            # This line ensures that the electronic fields of the payroll are 
+            # updated in Odoo, before the request
             payload = rec.get_json_request()
             rec._status_document_log(payload)

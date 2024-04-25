@@ -67,22 +67,22 @@ class HrPayslip(models.Model):
         "Others", currency_field="currency_id", readonly=True, copy=True
     )
     #Todo restore this code
-    earn_ids = fields.One2many(
-        "l10n_co_hr_payroll.earn.line",
-        "payslip_id",
-        string="Earn lines",
-        readonly=True,
-        copy=True,
-        states={"draft": [("readonly", False)]},
-    )
-    deduction_ids = fields.One2many(
-        "l10n_co_hr_payroll.deduction.line",
-        "payslip_id",
-        string="Deduction lines",
-        copy=True,
-        readonly=True,
-        states={"draft": [("readonly", False)]},
-    )
+    # earn_ids = fields.One2many(
+    #     "l10n_co_hr_payroll.earn.line",
+    #     "payslip_id",
+    #     string="Earn lines",
+    #     readonly=True,
+    #     copy=True,
+    #     states={"draft": [("readonly", False)]},
+    # )
+    # deduction_ids = fields.One2many(
+    #     "l10n_co_hr_payroll.deduction.line",
+    #     "payslip_id",
+    #     string="Deduction lines",
+    #     copy=True,
+    #     readonly=True,
+    #     states={"draft": [("readonly", False)]},
+    # )
     payslip_edi_ids = fields.Many2many(
         comodel_name="hr.payslip.edi",
         string="Edi Payslips",

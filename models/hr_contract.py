@@ -41,22 +41,35 @@ class HrContract(models.Model):
         comodel_name="l10n_co_edi_jorels.payroll_periods",
         string="Payroll period",
         compute="_compute_payroll_period_id",
-        store=True,
+        # store=True,
     )
 
     @api.depends("schedule_pay")
     def _compute_payroll_period_id(self):
+        """
+        This function computes the 'payroll_period_id' field based on the
+        'schedule_pay' field of each record in the self iterable.
+
+        The function uses a dictionary to map the possible values of 'schedule_pay'
+        to the corresponding 'payroll_period_id' values.
+
+        If 'schedule_pay' is not present, 'payroll_period_id' is set to None.
+        """
+        # Dictionary that maps 'schedule_pay' values to 'payroll_period_id' values
+        values = {
+            "monthly": 5,
+            "quarterly": 6,
+            "semi-annually": 6,
+            "annually": 6,
+            "weekly": 1,
+            "bi-weekly": 4,
+            "bi-monthly": 6,
+        }
+        # Loop through each record in the self iterable
         for rec in self:
-            values = {
-                "monthly": 5,
-                "quarterly": 6,
-                "semi-annually": 6,
-                "annually": 6,
-                "weekly": 1,
-                "bi-weekly": 4,
-                "bi-monthly": 6,
-            }
+            # If 'schedule_pay' is present, set 'payroll_period_id' to the corresponding value
             if rec.schedule_pay:
                 rec.payroll_period_id = values[rec.schedule_pay]
+            # If 'schedule_pay' is not present, set 'payroll_period_id' to None
             else:
                 rec.payroll_period_id = None

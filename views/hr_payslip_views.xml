@@ -108,7 +108,7 @@
                         <field name="worked_days_total" readonly="True" />
                     </group>
                 </xpath>
-                <xpath expr="//field[@name='input_line_ids']" position="after">
+                <!-- <xpath expr="//field[@name='input_line_ids']" position="after">
                     <separator string="Earn Details" />
                     <field name="earn_ids">
                         <tree string="Earn Details" editable="bottom">
@@ -339,8 +339,8 @@
                                 />
                             </group>
                         </form>
-                    </field>
-                    <separator string="Deduction Details" />
+                    </field> -->
+                    <!-- <separator string="Deduction Details" />
                     <field name="deduction_ids">
                         <tree string="Deduction Details" editable="bottom">
                             <field
@@ -367,7 +367,7 @@
                             </group>
                         </form>
                     </field>
-                </xpath>
+                </xpath> -->
                 <xpath expr="//page[last()]" position="after">
                     <page name="edi_response" string="Edi Response">
                         <group>

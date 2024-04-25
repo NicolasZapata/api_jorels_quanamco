@@ -181,7 +181,6 @@ class Edi(models.Model):
             target ('new'), and the constructed URL.
                 The URL is formed by appending the document's edi_uuid to a base URL
                 provided by the DIAN.
-
         """
         for rec in self:
             # Iterate over the records (self is likely a recordset)
@@ -417,7 +416,7 @@ class Edi(models.Model):
     @api.model
     def get_json_delete_request(self, requests_data):
         """
-        Create a dictionary with the necessary data for a delete request
+        Creates a dictionary with the necessary data for a delete request
         to the DIAN (Dirección de Impuestos y Aduanas Nacionales).
 
         This method takes a dictionary `requests_data` containing
@@ -453,6 +452,15 @@ class Edi(models.Model):
         return requests_delete
 
     def _validate_dian_generic(self, requests_data):
+        """
+        A method to validate generic data for DIAN (Dirección de Impuestos y Aduanas Nacionales).
+
+        Args:
+            requests_data (dict): A dictionary containing the data to be validated.
+
+        Raises:
+            UserError: If certain required fields are missing or if validation fails.
+        """
         for rec in self:
             try:
                 if "sequence" not in requests_data:
@@ -507,7 +515,6 @@ class Edi(models.Model):
                     "DIAN Validation Request: %s",
                     json.dumps(requests_data, indent=2, sort_keys=False),
                 )
-                # raise Warning(json.dumps(requests_data, indent=2, sort_keys=False))
                 response = requests.post(
                     api_url, json.dumps(requests_data), headers=header, params=params
                 ).json()
@@ -532,12 +539,10 @@ class Edi(models.Model):
                 elif "is_valid" in response:
                     rec.write_response(response, payload)
                     if response["is_valid"]:
-                        # self.env.user.notify_success(message=_("The validation at DIAN has been successful."))
                         _logger.debug("The validation at DIAN has been successful.")
                     elif "zip_key" in response:
                         if response["zip_key"] is not None:
                             if not rec.edi_is_not_test:
-                                # self.env.user.notify_success(message=_("Document sent to DIAN in habilitation."))
                                 _logger.debug("Document sent to DIAN in habilitation.")
                             else:
                                 temp_message = {
@@ -684,15 +689,29 @@ class Edi(models.Model):
                 raise UserError(_("Failed to process the request: %s") % e)
 
     def _status_document_log(self, payload):
+        """
+        Method to get the status of a document from the DIAN API logs.
+
+        Args:
+            payload (dict): The payload data to be sent with the request.
+
+        Raises:
+            UserError: If there is an issue with the request or response.
+        """
         for rec in self:
             try:
+                # Extract sequence data from the payload
                 _logger.debug("Payload data: %s", payload)
                 sequence_prefix = payload["sequence"]["prefix"]
                 sequence_number = payload["sequence"]["number"]
                 sequence_formatted = sequence_prefix + str(sequence_number)
+
+                # If a sequence is provided, proceed with the request
                 if sequence_formatted:
-                    requests_data = {}
+                    requests_data = {}  # Initialize request data
                     _logger.debug("API Requests: %s", requests_data)
+
+                    # Retrieve API key and URL
                     if rec.company_id.api_key:
                         token = rec.company_id.api_key
                     else:
@@ -702,13 +721,21 @@ class Edi(models.Model):
                         .sudo()
                         .get_param("jorels.edipo.api_url", "https://edipo.jorels.com")
                     )
+
+                    # Set parameters for the request
                     params = {"token": token}
+
+                    # Set headers for the request
                     header = {
                         "accept": "application/json",
                         "Content-Type": "application/json",
                     }
+
+                    # Construct the API URL
                     api_url = api_url + "/logs/" + sequence_formatted
                     _logger.debug("API URL: %s", api_url)
+
+                    # Make the API request and get the response
                     response = requests.post(
                         api_url,
                         json.dumps(requests_data),
@@ -716,8 +743,12 @@ class Edi(models.Model):
                         params=params,
                     ).json()
                     _logger.debug("API Response: %s", response)
+
+                    # Handle authentication error
                     if "detail" in response:
                         raise UserError(response["detail"])
+
+                    # Handle response messages
                     if "message" in response:
                         if (
                             response["message"] == "Unauthenticated."
@@ -733,8 +764,10 @@ class Edi(models.Model):
                                 )
                             else:
                                 _logger.debug(response["message"])
+
+                    # Handle validation success
                     elif response and ("is_valid" in response[0]):
-                        success = False
+                        success = False  # Initialize success flag
                         for log in response:
                             if log["is_valid"]:
                                 rec.write_response(log, payload)
@@ -746,51 +779,131 @@ class Edi(models.Model):
                             _logger.debug("The document has not been validated.")
                     else:
                         _logger.debug("The document could not be consulted.")
+
                 else:
                     _logger.debug(
                         "A number is required to verify the status of the document."
                     )
+
             except Exception as e:
                 _logger.debug("Failed to process the request: %s", e)
 
     @api.model
     def dict_root_sum(self, first, last, vals=[]):
+        """
+        Recursively merges dictionary values from 'first' into 'last' for
+        the given list of fields.
+
+        Args:
+            first (dict): The dictionary to merge from.
+            last (dict): The dictionary to merge into.
+            vals (list): The list of fields to merge.
+        """
+        # Merge the values of each field recursively.
         for field in vals:
+            # Merge the values of a single field.
             self.dict_root_sum_field(first, last, field)
 
     @api.model
     def dict_root_merge(self, first, last, vals=[]):
+        """
+        Merges values from 'first' into 'last' dictionary for the given list of fields.
+
+        Args:
+            first (dict): The dictionary to merge from.
+            last (dict): The dictionary to merge into.
+            vals (list): The list of fields to merge.
+        """
+        # Loop through each field in the 'vals' list and merge its values.
         for field in vals:
+            """
+            Merge the values of a single field.
+
+            Args:
+                first (dict): The dictionary to merge from.
+                last (dict): The dictionary to merge into.
+                field (str): The field to merge.
+            """
             self.dict_root_merge_field(first, last, field)
 
     @api.model
     def dict_root_sum_field(self, first, last, field):
+        """
+        Merge a single field from 'first' dictionary into 'last' dictionary.
+        If the field does not exist in 'last' dictionary, add it.
+        Otherwise, just add the value from 'first' to the existing value in 'last'.
+
+        Args:
+            first (dict): The dictionary to merge from.
+            last (dict): The dictionary to merge into.
+            field (str): The field to merge.
+        """
+        # Check if the field exists in both dictionaries.
         if field in first:
+            # If the field does not exist in 'last' dictionary, add it.
             if field not in last:
                 last[field] = first[field]
+            # Otherwise, just add the value from 'first' to the existing value in 'last'.
             else:
                 last[field] += first[field]
 
     @api.model
     def dict_root_merge_field(self, first, last, field):
+        """
+        Merge a single field from 'first' dictionary into 'last' dictionary.
+
+        Args:
+            first (dict): The dictionary to merge from.
+            last (dict): The dictionary to merge into.
+            field (str): The field to merge.
+        """
+        # Check if the field exists in both dictionaries.
         if field in first:
+            # If the field does not exist in 'last' dictionary, add it.
+            # Otherwise, just replace the value with the one from 'first'.
             last[field] = first[field]
 
     @api.model
     def dict_root_append_lists(self, first, last, list_fields):
+        """
+        Appends lists from the 'first' dictionary to the 'last' dictionary.
+
+        Args:
+            first (dict): The dictionary to append from.
+            last (dict): The dictionary to append to.
+            list_fields (list): The list of fields to append.
+        """
+        # Iterate over each list field in list_fields
         for list_field in list_fields:
+            # Check if the list field exists in both dictionaries.
             if list_field in first:
+                # If the list field does not exist in 'last' dictionary, add it.
                 if list_field not in last:
                     last[list_field] = []
+                # Append each temp_dict from the 'first' dictionary 
+                # to the 'last' dictionary's list field.
                 for temp_dict in first[list_field]:
                     last[list_field].append(temp_dict)
 
     @api.model
     def dict_root_append_dicts(self, first, last, dict_fields):
+        """
+        Append dictionaries from the 'first' dictionary to the 'last' dictionary.
+
+        Args:
+            first (dict): The dictionary to append from.
+            last (dict): The dictionary to append to.
+            dict_fields (list): The list of fields to append.
+        """
+        # Iterate over each dictionary field in dict_fields
         for dict_field in dict_fields:
+            # Check if the dictionary field exists in both dictionaries.
             if dict_field in first:
+                # If the dictionary field does not exist in 'last' dictionary, add it.
                 if dict_field not in last:
                     last[dict_field] = {}
+                # Append each key-value pair from the 'first' dictionary 
+                # to the 'last' dictionary's dictionary field.
                 self.dict_root_append_lists(
                     first[dict_field], last[dict_field], first[dict_field]
                 )
@@ -798,33 +911,103 @@ class Edi(models.Model):
     # Others
     @api.model
     def dict_append_lists_1(self, first, last, b, c=[]):
+        """
+        Append lists from the 'b' key in the 'first' dictionary 
+        to the 'b' key in the 'last' dictionary.  If the 'b' key 
+        does not exist in 'last' dictionary, add it.
+
+        Args:
+            first (dict): The dictionary to append from.
+            last (dict): The dictionary to append to.
+            b (str): The key to append lists from.
+            c (list): The list of fields to append.
+        """
+        # Check if the 'b' key exists in both dictionaries.
         if b in first:
+            # If the 'b' key does not exist in 'last' dictionary, add it.
             if b not in last:
                 last[b] = {}
+            # Append each temp_dict from the 'b' key in the 'first' dictionary 
+            # to the 'b' key in the 'last' dictionary.
             self.dict_root_append_lists(first[b], last[b], c)
 
     @api.model
     def dict_sum_1(self, first, last, b, c=[], d=[]):
+        """
+        Append sums of values from the 'b' key in the 'first' dictionary 
+        to the 'b' key in the 'last' dictionary. If the 'b' key 
+        does not exist in 'last' dictionary, add it. Merge lists from 
+        the 'b' key in the 'first' dictionary to the 'b' key 
+        in the 'last' dictionary.
+
+        Args:
+            first (dict): The dictionary to sum from.
+            last (dict): The dictionary to sum to.
+            b (str): The key to sum and merge lists from.
+            c (list): The list of fields to sum.
+            d (list): The list of fields to merge.
+        """
+        # Check if the 'b' key exists in both dictionaries.
         if b in first:
+            # If the 'b' key does not exist in 'last' dictionary, add it.
             if b not in last:
                 last[b] = {}
+            # Append each sum from the 'b' key in the 'first' dictionary 
+            # to the 'b' key in the 'last' dictionary.
             self.dict_root_sum(first[b], last[b], c)
+            # Merge each list from the 'b' key in the 'first' dictionary 
+            # to the 'b' key in the 'last' dictionary.
             self.dict_root_merge(first[b], last[b], d)
 
     @api.model
     def dict_sum_2(self, first, last, a, b, c=[], d=[]):
+        """
+        Append sums of values from the 'b' key in the 'a' key in the 'first' dictionary 
+        to the 'b' key in the 'a' key in the 'last' dictionary. If the 'b' key 
+        does not exist in 'a' key in 'last' dictionary, add it. Merge lists from 
+        the 'b' key in the 'a' key in the 'first' dictionary to the 'b' key 
+        in the 'a' key in the 'last' dictionary.
+
+        Args:
+            first (dict): The dictionary to sum from.
+            last (dict): The dictionary to sum to.
+            a (str): The key to sum and merge lists from.
+            b (str): The key to sum and merge lists from.
+            c (list): The list of fields to sum.
+            d (list): The list of fields to merge.
+        """
+        # Check if the 'a' key exists in both dictionaries.
         if a in first:
+            # If the 'a' key does not exist in 'last' dictionary, add it.
             if a not in last:
                 last[a] = {}
+            # Check if the 'b' key exists in the 'a' key in 'first' dictionary.
             if b in first[a]:
+                # If the 'b' key does not exist in 'a' key in 'last' dictionary, add it.
                 if b not in last[a]:
                     last[a][b] = {}
+                # Append each sum from the 'b' key in the 'a' key in the 'first' dictionary 
+                # to the 'b' key in the 'a' key in the 'last' dictionary.
                 self.dict_root_sum(first[a][b], last[a][b], c)
+                # Merge each list from the 'b' key in the 'a' key in the 'first' dictionary 
+                # to the 'b' key in the 'a' key in the 'last' dictionary.
                 self.dict_root_merge(first[a][b], last[a][b], d)
 
     @api.model
     def dict_merge_field(self, first, last, a, b, c):
+        """
+        Merge values from 'first' dictionary to 'last' dictionary.
+
+        Args:
+            first (dict): The dictionary to merge from.
+            last (dict): The dictionary to merge to.
+            a (str): The key to merge values from.
+            b (str): The key to merge values from.
+            c (str): The key to merge values from.
+        """
+        # Check if the field exists in both dictionaries.
         if c in first[a][b]:
+            # If the field does not exist in 'last' dictionary, add it.
             if c not in last[a][b]:
                 last[a][b][c] = first[a][b][c]
 

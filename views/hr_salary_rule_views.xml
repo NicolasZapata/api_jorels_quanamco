@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <!--
     l10n_co_hr_payroll
     Copyright (C) 2022  Jorels SAS
@@ -18,8 +19,13 @@
 
     email: info@jorels.com
  -->
+
 <odoo>
-    <record id="hr_salary_rule_view_form_l10n_co_hr_payroll" model="ir.ui.view">
+
+    <record
+        id="hr_salary_rule_view_form_l10n_co_hr_payroll"
+        model="ir.ui.view"
+    >
         <field name="name">hr.salary.rule.form.l10n_co_hr_payroll.inherit</field>
         <field name="model">hr.salary.rule</field>
         <field name="priority">20</field>
@@ -83,4 +89,5 @@
             </data>
         </field>
     </record>
+
 </odoo>

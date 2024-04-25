@@ -9,12 +9,21 @@
   'category': 'Jores, Api',
   'depends': [
     'payroll_quanamco',
+    'payroll',
     'account',
     'mail',
   ],
   'data': [
     # Security
     'security/ir.model.access.csv',
+    'report/hr_payslip_edi_report.xml',
+    'views/action_menus.xml',
+    'views/edi_gen_views.xml',
+    'views/hr_contract_views.xml',
+    'views/hr_payslip_edi_views.xml',
+    'views/hr_payslip_views.xml',
+    'views/hr_salary_rule_views.xml',
+    'views/res_config_settings_views.xml',
   ],
   # 'demo': [
   #   ''

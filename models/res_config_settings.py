@@ -125,7 +125,15 @@ class ResConfigSettings(models.TransientModel):
 
     @api.model
     def get_values(self):
+        """
+        Retrieves the values from the superclass and adds the specific ones.
+
+        Returns:
+            - dict: A dictionary containing the retrieved values.
+        """
+        # Retrieve values from the superclass
         res = super(ResConfigSettings, self).get_values()
+        # Add specific values
         res["edi_payroll_is_not_test"] = self.env.company.edi_payroll_is_not_test
         res["edi_payroll_enable"] = self.env.company.edi_payroll_enable
         res["edi_payroll_consolidated_enable"] = (
@@ -137,4 +145,5 @@ class ResConfigSettings(models.TransientModel):
         res["edi_payroll_enable_validate_state"] = (
             self.env.company.edi_payroll_enable_validate_state
         )
+        # Return the result
         return res

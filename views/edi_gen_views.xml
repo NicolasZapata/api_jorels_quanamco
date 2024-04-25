@@ -20,13 +20,7 @@
  -->
 
 <odoo>
-    <record id="action_view_hr_payslip_edi_generate" model="ir.actions.act_window">
-        <field name="name">Generate Edi Payslips</field>
-        <field name="res_model">l10n_co_hr_payroll.edi_gen</field>
-        <field name="view_mode">form</field>
-        <field name="target">new</field>
-    </record>
-
+    
     <record id="edi_gen_wizard_form" model="ir.ui.view">
         <field name="name">l10n_co_hr_payroll.edi_gen.form</field>
         <field name="model">l10n_co_hr_payroll.edi_gen</field>
@@ -49,11 +43,4 @@
         </field>
     </record>
 
-    <menuitem
-        action="action_view_hr_payslip_edi_generate"
-        id="menu_payslip_edi_generate_wizard"
-        name="Generate Edi Payslips"
-        parent="payroll.hr_payslip_run_menu"
-        groups="payroll.group_payroll_user"
-    />
 </odoo>

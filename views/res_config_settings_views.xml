@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <!--
     l10n_co_hr_payroll
     Copyright (C) 2022  Jorels SAS
@@ -18,6 +19,7 @@
 
     email: info@jorels.com
  -->
+ 
 <odoo>
 
     <record id="res_config_settings_view_form_l10n_co_hr_payroll" model="ir.ui.view">
@@ -126,12 +128,16 @@
                                     for="daily_surcharge_hours_sundays_holidays"
                                     class="col-lg-3 o_light_label"
                                 />
-                                <field name="daily_surcharge_hours_sundays_holidays" />
+                                <field
+                                    name="daily_surcharge_hours_sundays_holidays"
+                                />
                                 <label
                                     for="sunday_holidays_night_surcharge_hours"
                                     class="col-lg-3 o_light_label"
                                 />
-                                <field name="sunday_holidays_night_surcharge_hours" />
+                                <field
+                                    name="sunday_holidays_night_surcharge_hours"
+                                />
                             </div>
                         </div>
                     </div>
@@ -250,4 +256,5 @@
             </xpath>
         </field>
     </record>
+    
 </odoo>

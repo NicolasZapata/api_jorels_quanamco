@@ -131,21 +131,37 @@ class EarnLine(models.Model):
 
         This function is decorated with `@api.depends("rule_input_id")`
         and is called when the `rule_input_id` field is changed.
-        It iterates over each record in the self object and updates
-        the `name`, `code`, and `category` fields based on
-        the values of `rule_input_id`.
+        It updates the `name`, `code`, and `category` fields of each record
+        based on the values of `rule_input_id`.
 
         Parameters:
             self (models.Model): The current recordset.
         """
+        # Iterate over each record in the self object
         for rec in self:
+            # Update the name field with the name from rule_input_id
             rec.name = rec.rule_input_id.name
+            # Update the code field with the code from rule_input_id
             rec.code = rec.rule_input_id.code
+            # Update the category field with the earn_category from input_id
             rec.category = rec.rule_input_id.input_id.earn_category
 
     @api.depends("quantity", "amount")
     def _compute_total(self):
+        """
+        Compute the total for each record in the self object.
+
+        This function is decorated with `@api.depends("quantity", "amount")`
+        and is called when either the `quantity` or `amount` fields are changed.
+        It iterates over each record in the self object and updates
+        the `total` field based on the values of `quantity` and `amount`.
+
+        Parameters:
+            self (models.Model): The current recordset.
+        """
+        # Iterate over each record in the self object
         for rec in self:
+            # Calculate the total by multiplying quantity and amount
             rec.total = rec.quantity * rec.amount
 
     @api.depends("date_start", "date_end", "time_start", "time_end")

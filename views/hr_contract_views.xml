@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <!--
     l10n_co_hr_payroll
     Copyright (C) 2022  Jorels SAS
@@ -18,20 +19,26 @@
 
     email: info@jorels.com
  -->
+
 <odoo>
-    <record id="hr_contract_view_form_l10n_co_hr_payroll" model="ir.ui.view">
+
+    <record
+        id="hr_contract_view_form_l10n_co_hr_payroll"
+        model="ir.ui.view"
+    >
         <field name="name">hr.contract.form.l10n_co_hr_payroll.inherit</field>
         <field name="model">hr.contract</field>
         <field name="priority">20</field>
-        <field name="inherit_id" ref="hr_contract.hr_contract_view_form"/>
+        <field name="inherit_id" ref="payroll_quanamco.payroll_co_contract_view_form_inherit" />
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='struct_id']" position="after">
-                <field name="type_worker_id"/>
-                <field name="subtype_worker_id"/>
-                <field name="high_risk_pension"/>
-                <field name="integral_salary"/>
-                <field name="type_contract_id"/>
+            <xpath expr="//field[@name='salary_type']" position="after">
+                <field name="type_worker_id" />
+                <field name="subtype_worker_id" />
+                <field name="high_risk_pension" />
+                <field name="integral_salary" />
+                <field name="type_contract_id" />
             </xpath>
         </field>
     </record>
+
 </odoo>
