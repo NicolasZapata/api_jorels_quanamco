@@ -55,8 +55,20 @@ class EdiGen(models.TransientModel):
         default=lambda self: fields.Date.context_today(self).year,
     )
     # It only works for one contract per employee.
-    # If an employee's payroll has multiple contracts, then the generated payroll will grab the last contract it finds.
+    # If an employee's payroll has multiple contracts, 
+    # then the generated payroll will grab the last contract it finds.
     def generate(self):
+        """
+        Generates Edi Payslips based on the current year and month.
+
+        This function searches for existing payslips and credit notes for the current year and month.
+        It then filters out the valid payslips, deletes existing Edi Payslips in draft state,
+        and creates new Edi Payslips in draft state without payslips.
+        Finally, it adds the valid payslips to the Edi Payslips and updates the contract_id field.
+
+        Returns:
+            dict: An action dictionary to update or redirect to the Edi Payslip view.
+        """
         payslip_env = self.env["hr.payslip"]
         edi_payslip_env = self.env["hr.payslip.edi"]
 

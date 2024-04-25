@@ -3,6 +3,7 @@ from . import (
     deduction_line,
     edi,
     edi_gen,
+    earn_line,
     hr_contract,
     hr_payslip,
     hr_payslip_edi,

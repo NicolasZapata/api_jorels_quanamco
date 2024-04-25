@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <!--
-    l10n_co_hr_payroll
+    api_jorels_quanamco
     Copyright (C) 2022  Jorels SAS
 
     This program is free software: you can redistribute it and/or modify
@@ -248,8 +248,8 @@
         model="ir.actions.server"
     >
         <field name="name">Replace with log DIAN</field>
-        <field name="model_id" ref="l10n_co_hr_payroll.model_hr_payslip_edi" />
-        <field name="binding_model_id" ref="l10n_co_hr_payroll.model_hr_payslip_edi" />
+        <field name="model_id" ref="api_jorels_quanamco.model_hr_payslip_edi" />
+        <field name="binding_model_id" ref="api_jorels_quanamco.model_hr_payslip_edi" />
         <field name="state">code</field>
         <field name="code">records.status_document_log()</field>
     </record>
@@ -259,8 +259,8 @@
         model="ir.actions.server"
     >
         <field name="name">Confirm Draft Payrolls</field>
-        <field name="model_id" ref="l10n_co_hr_payroll.model_hr_payslip_edi" />
-        <field name="binding_model_id" ref="l10n_co_hr_payroll.model_hr_payslip_edi" />
+        <field name="model_id" ref="api_jorels_quanamco.model_hr_payslip_edi" />
+        <field name="binding_model_id" ref="api_jorels_quanamco.model_hr_payslip_edi" />
         <field name="state">code</field>
         <field name="code">records.action_payslip_done()</field>
     </record>
@@ -270,39 +270,10 @@
         model="ir.actions.server"
     >
         <field name="name">Validate DIAN</field>
-        <field name="model_id" ref="l10n_co_hr_payroll.model_hr_payslip_edi" />
-        <field name="binding_model_id" ref="l10n_co_hr_payroll.model_hr_payslip_edi" />
+        <field name="model_id" ref="api_jorels_quanamco.model_hr_payslip_edi" />
+        <field name="binding_model_id" ref="api_jorels_quanamco.model_hr_payslip_edi" />
         <field name="state">code</field>
         <field name="code">records.validate_dian()</field>
     </record>
-
-    <record
-        id="action_view_hr_payslip_edi"
-        model="ir.actions.act_window"
-    >
-        <field name="name">Edi Payslips</field>
-        <field name="res_model">hr.payslip.edi</field>
-        <field name="view_mode">tree,form</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Create your first Edi Payslip!
-            </p>
-        </field>
-    </record>
-
-    <menuitem
-        id="menu_payslip_edi"
-        name="Edi Payslips"
-        parent="payroll.hr_payslip_menu"
-        groups="payroll.group_payroll_user"
-    />
-
-    <menuitem
-        action="action_view_hr_payslip_edi"
-        id="menu_payslip_edi_tree"
-        name="All Edi Payslips"
-        parent="payroll.hr_payslip_menu"
-        groups="payroll.group_payroll_user"
-    />
 
 </odoo>

@@ -21,6 +21,43 @@
       groups="payroll.group_payroll_user"
     />
 
+    <record
+      id="action_view_hr_payslip_edi"
+      model="ir.actions.act_window"
+    >
+      <field name="name">Edi Payslips</field>
+      <field name="res_model">hr.payslip.edi</field>
+      <field name="view_mode">tree,form</field>
+      <field name="help" type="html">
+        <p class="o_view_nocontent_smiling_face">
+          Create your first Edi Payslip!
+        </p>
+      </field>
+    </record>
+
+    <menuitem
+      id="menu_payslip_edi"
+      name="Edi Payslips"
+      parent="payroll.hr_payslip_run_menu"
+      groups="payroll.group_payroll_user"
+    />
+
+    <menuitem
+      action="action_view_hr_payslip_edi"
+      id="menu_payslip_edi_tree"
+      name="All Edi Payslips"
+      parent="payroll.hr_payslip_run_menu"
+      groups="payroll.group_payroll_user"
+    />
+
+    <!-- Move Payslip Run Action to This menu -->
+    <menuitem
+      id="payslip_run_menu"
+      name="Payslip Run"
+      sequence="10"
+      action="payroll.hr_payslip_run_action"
+      parent="payroll.hr_payslip_run_menu"
+    />
 
   </data>
 

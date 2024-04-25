@@ -238,11 +238,11 @@ class Edi(models.Model):
     @api.model
     def join_dicts(self, a, b, date_issue):
         """
-        Merge two dictionaries 'a' and 'b' containing payroll information, 
+        Merge two dictionaries 'a' and 'b' containing payroll information,
         preserving the order of the periods.
 
-        This takes two dictionaries 'a' and 'b', and a 'date_issue' string. 
-        It merges the dictionaries by summing or appending their values based on 
+        This takes two dictionaries 'a' and 'b', and a 'date_issue' string.
+        It merges the dictionaries by summing or appending their values based on
         the keys present. The resulting dictionary is returned with the merged data,
         preserving the order of the periods based on the 'settlement_start_date' key.
 
@@ -576,7 +576,7 @@ class Edi(models.Model):
 
     def _status_zip(self, payload):
         """
-        Check the status of a document with DIAN 
+        Check the status of a document with DIAN
         (Colombian tax authority) using the EDIPO API.
 
         Args:
@@ -593,7 +593,7 @@ class Edi(models.Model):
                     # Prepare request data
                     requests_data = {}
                     _logger.debug("API Requests: %s", requests_data)
-                    
+
                     # Get API key and URL
                     if rec.company_id.api_key:
                         token = rec.company_id.api_key
@@ -670,7 +670,9 @@ class Edi(models.Model):
                                     raise UserError(str(temp_message))
                             else:
                                 raise UserError(
-                                    _("A valid Zip key or UUID was not obtained. Try again.")
+                                    _(
+                                        "A valid Zip key or UUID was not obtained. Try again."
+                                    )
                                 )
                         else:
                             raise UserError(
@@ -682,7 +684,9 @@ class Edi(models.Model):
                         )
                 else:
                     raise UserError(
-                        _("A zip key or UUID is required to check the status of the document.")
+                        _(
+                            "A zip key or UUID is required to check the status of the document."
+                        )
                     )
             except Exception as e:
                 _logger.debug("Failed to process the request: %s", e)
@@ -880,7 +884,7 @@ class Edi(models.Model):
                 # If the list field does not exist in 'last' dictionary, add it.
                 if list_field not in last:
                     last[list_field] = []
-                # Append each temp_dict from the 'first' dictionary 
+                # Append each temp_dict from the 'first' dictionary
                 # to the 'last' dictionary's list field.
                 for temp_dict in first[list_field]:
                     last[list_field].append(temp_dict)
@@ -902,7 +906,7 @@ class Edi(models.Model):
                 # If the dictionary field does not exist in 'last' dictionary, add it.
                 if dict_field not in last:
                     last[dict_field] = {}
-                # Append each key-value pair from the 'first' dictionary 
+                # Append each key-value pair from the 'first' dictionary
                 # to the 'last' dictionary's dictionary field.
                 self.dict_root_append_lists(
                     first[dict_field], last[dict_field], first[dict_field]
@@ -912,8 +916,8 @@ class Edi(models.Model):
     @api.model
     def dict_append_lists_1(self, first, last, b, c=[]):
         """
-        Append lists from the 'b' key in the 'first' dictionary 
-        to the 'b' key in the 'last' dictionary.  If the 'b' key 
+        Append lists from the 'b' key in the 'first' dictionary
+        to the 'b' key in the 'last' dictionary.  If the 'b' key
         does not exist in 'last' dictionary, add it.
 
         Args:
@@ -927,17 +931,17 @@ class Edi(models.Model):
             # If the 'b' key does not exist in 'last' dictionary, add it.
             if b not in last:
                 last[b] = {}
-            # Append each temp_dict from the 'b' key in the 'first' dictionary 
+            # Append each temp_dict from the 'b' key in the 'first' dictionary
             # to the 'b' key in the 'last' dictionary.
             self.dict_root_append_lists(first[b], last[b], c)
 
     @api.model
     def dict_sum_1(self, first, last, b, c=[], d=[]):
         """
-        Append sums of values from the 'b' key in the 'first' dictionary 
-        to the 'b' key in the 'last' dictionary. If the 'b' key 
-        does not exist in 'last' dictionary, add it. Merge lists from 
-        the 'b' key in the 'first' dictionary to the 'b' key 
+        Append sums of values from the 'b' key in the 'first' dictionary
+        to the 'b' key in the 'last' dictionary. If the 'b' key
+        does not exist in 'last' dictionary, add it. Merge lists from
+        the 'b' key in the 'first' dictionary to the 'b' key
         in the 'last' dictionary.
 
         Args:
@@ -952,29 +956,29 @@ class Edi(models.Model):
             # If the 'b' key does not exist in 'last' dictionary, add it.
             if b not in last:
                 last[b] = {}
-            # Append each sum from the 'b' key in the 'first' dictionary 
+            # Append each sum from the 'b' key in the 'first' dictionary
             # to the 'b' key in the 'last' dictionary.
             self.dict_root_sum(first[b], last[b], c)
-            # Merge each list from the 'b' key in the 'first' dictionary 
+            # Merge each list from the 'b' key in the 'first' dictionary
             # to the 'b' key in the 'last' dictionary.
             self.dict_root_merge(first[b], last[b], d)
 
     @api.model
     def dict_sum_2(self, first, last, a, b, c=[], d=[]):
         """
-        Append sums of values from the 'b' key in the 'a' key in the 'first' dictionary 
-        to the 'b' key in the 'a' key in the 'last' dictionary. If the 'b' key 
-        does not exist in 'a' key in 'last' dictionary, add it. Merge lists from 
-        the 'b' key in the 'a' key in the 'first' dictionary to the 'b' key 
-        in the 'a' key in the 'last' dictionary.
+        Append sums of values from the `b` key in the `a` key in the 'first' dictionary
+        to the `b` key in the `a` key in the `last` dictionary. If the `b` key
+        does not exist in `a` key in `last` dictionary, add it. Merge lists from
+        the `b` key in the `a` key in the 'first' dictionary to the `b` key
+        in the `a` key in the `last` dictionary.
 
         Args:
-            first (dict): The dictionary to sum from.
-            last (dict): The dictionary to sum to.
-            a (str): The key to sum and merge lists from.
-            b (str): The key to sum and merge lists from.
-            c (list): The list of fields to sum.
-            d (list): The list of fields to merge.
+            - first (dict): The dictionary to sum from.
+            - last (dict): The dictionary to sum to.
+            - a (str): The key to sum and merge lists from.
+            - b (str): The key to sum and merge lists from.
+            - c (list): The list of fields to sum.
+            - d (list): The list of fields to merge.
         """
         # Check if the 'a' key exists in both dictionaries.
         if a in first:
@@ -986,10 +990,10 @@ class Edi(models.Model):
                 # If the 'b' key does not exist in 'a' key in 'last' dictionary, add it.
                 if b not in last[a]:
                     last[a][b] = {}
-                # Append each sum from the 'b' key in the 'a' key in the 'first' dictionary 
+                # Append each sum from the 'b' key in the 'a' key in the 'first' dictionary
                 # to the 'b' key in the 'a' key in the 'last' dictionary.
                 self.dict_root_sum(first[a][b], last[a][b], c)
-                # Merge each list from the 'b' key in the 'a' key in the 'first' dictionary 
+                # Merge each list from the 'b' key in the 'a' key in the 'first' dictionary
                 # to the 'b' key in the 'a' key in the 'last' dictionary.
                 self.dict_root_merge(first[a][b], last[a][b], d)
 
@@ -1013,14 +1017,42 @@ class Edi(models.Model):
 
     @api.model
     def dict_sum_field(self, first, last, a, b, c):
+        """
+        Merge a single field from 'first' dictionary into 'last' dictionary.
+        If the field does not exist in 'last' dictionary, add it.
+        Otherwise, just add the value from 'first' to the existing value in 'last'.
+
+        Args:
+            first (dict): The dictionary to merge from.
+            last (dict): The dictionary to merge into.
+            a (str): The key to merge values from.
+            b (str): The key to merge values from.
+            c (str): The field to merge.
+        """
+        # Check if the field exists in both dictionaries.
         if c in first[a][b]:
+            # If the field does not exist in 'last' dictionary, add it.
             if c not in last[a][b]:
                 last[a][b][c] = first[a][b][c]
+            # Otherwise, just add the value from 'first' to the existing value in 'last'.
             else:
                 last[a][b][c] += first[a][b][c]
 
     @api.model
     def get_json2html_field_name(self, field_name, key):
+        """
+        Returns the translated field name for a given field or key.
+
+        Args:
+            field_name (str): The name of the field to get the translated name for.
+            key (str): The key to get the translated name for.
+
+        Returns:
+            str: The translated field name. If the field_name is found in the field_names dictionary,
+                 it returns the translated value for that field_name. If the key is found in the
+                 field_names dictionary, it returns the translated value for that key. Otherwise,
+                 it returns the original field_name.
+        """
         field_names = {
             "_sync": _("Sync"),
             "_rounding": _("Rounding"),
@@ -1162,6 +1194,17 @@ class Edi(models.Model):
 
     @api.model
     def payload2html(self, payload, tab, title=""):
+        """
+        A function that converts a payload dictionary into an HTML table structure for rendering. 
+        Args:
+            payload (dict): The payload dictionary to be converted.
+            tab (int): The tab level for the HTML structure.
+            title (str, optional): The title to be included in the HTML output. 
+            Defaults to an empty string.
+
+        Returns:
+            str: The HTML representation of the payload as a table.
+        """
         output = ""
         output_temp = "<table class='o_group o_inner_group o_group_col_12'><tbody>"
         for key, value in payload.items():

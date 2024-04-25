@@ -79,7 +79,7 @@
                     <field name="payment_form_id" />
                     <field name="payment_method_id" />
                 </xpath>
-                <xpath expr="//field[@name='line_ids']" position="after">
+                <xpath expr="//field[@name='dynamic_filtered_payslip_lines']" position="after">
                     <group>
                         <field
                             name="accrued_total_amount"
@@ -424,13 +424,13 @@
                         attrs="{'invisible':[('credit_note','=',False)]}"
                     />
                 </xpath>
-                <xpath
-                    expr="//field[@name='line_ids']//tree//field[@name='rate']"
+                <!-- <xpath
+                    expr="//field[@name='dynamic_filtered_payslip_lines']//tree//field[@name='rate']"
                     position="after"
                 >
                     <field name="edi_quantity" />
                     <field name="edi_rate" />
-                </xpath>
+                </xpath> -->
                 <xpath expr="//sheet" position="after">
                     <div class="oe_chatter">
                         <field name="message_follower_ids" widget="mail_followers" />

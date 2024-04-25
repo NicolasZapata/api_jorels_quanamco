@@ -32,11 +32,19 @@ class Postal(models.Model):
     _description = "Postal"
 
     name = fields.Char(string="Postal code", required=True)
-    postal_zone = fields.Char(string='Postal zone', required=True)
-    municipality_id = fields.Many2one(comodel_name='l10n_co_edi_jorels.postal_municipality', string='Municipality',
-                                      required=True, index=True)
-    department_id = fields.Many2one(comodel_name='l10n_co_edi_jorels.postal_department', string='Department',
-                                    required=True, index=True)
-    type = fields.Char(string='Type', required=True)
-    neighborhood = fields.Char(string='Neighborhood', required=True)
-    sidewalk = fields.Char(string='Sidewalk', required=True)
+    postal_zone = fields.Char(string="Postal zone", required=True)
+    municipality_id = fields.Many2one(
+        comodel_name="l10n_co_edi_jorels.postal_municipality",
+        string="Municipality",
+        required=True,
+        index=True,
+    )
+    department_id = fields.Many2one(
+        comodel_name="l10n_co_edi_jorels.postal_department",
+        string="Department",
+        required=True,
+        index=True,
+    )
+    type = fields.Char(string="Type", required=True)
+    neighborhood = fields.Char(string="Neighborhood", required=True)
+    sidewalk = fields.Char(string="Sidewalk", required=True)
