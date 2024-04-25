@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <!--
-    api_jorels_quanamco
+    payroll_dataico
     Copyright (C) 2022  Jorels SAS
 
     This program is free software: you can redistribute it and/or modify
@@ -248,8 +248,8 @@
         model="ir.actions.server"
     >
         <field name="name">Replace with log DIAN</field>
-        <field name="model_id" ref="api_jorels_quanamco.model_hr_payslip_edi" />
-        <field name="binding_model_id" ref="api_jorels_quanamco.model_hr_payslip_edi" />
+        <field name="model_id" ref="payroll_dataico.model_hr_payslip_edi" />
+        <field name="binding_model_id" ref="payroll_dataico.model_hr_payslip_edi" />
         <field name="state">code</field>
         <field name="code">records.status_document_log()</field>
     </record>
@@ -259,8 +259,8 @@
         model="ir.actions.server"
     >
         <field name="name">Confirm Draft Payrolls</field>
-        <field name="model_id" ref="api_jorels_quanamco.model_hr_payslip_edi" />
-        <field name="binding_model_id" ref="api_jorels_quanamco.model_hr_payslip_edi" />
+        <field name="model_id" ref="payroll_dataico.model_hr_payslip_edi" />
+        <field name="binding_model_id" ref="payroll_dataico.model_hr_payslip_edi" />
         <field name="state">code</field>
         <field name="code">records.action_payslip_done()</field>
     </record>
@@ -270,8 +270,8 @@
         model="ir.actions.server"
     >
         <field name="name">Validate DIAN</field>
-        <field name="model_id" ref="api_jorels_quanamco.model_hr_payslip_edi" />
-        <field name="binding_model_id" ref="api_jorels_quanamco.model_hr_payslip_edi" />
+        <field name="model_id" ref="payroll_dataico.model_hr_payslip_edi" />
+        <field name="binding_model_id" ref="payroll_dataico.model_hr_payslip_edi" />
         <field name="state">code</field>
         <field name="code">records.validate_dian()</field>
     </record>
