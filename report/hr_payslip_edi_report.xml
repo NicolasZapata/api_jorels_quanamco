@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    
     <record id="action_hr_payslip_co_report" model="ir.actions.report">
         <field name="name">Edi payslip</field>
         <field name="model">hr.payslip</field>

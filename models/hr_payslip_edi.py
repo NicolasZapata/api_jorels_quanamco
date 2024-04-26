@@ -96,7 +96,6 @@ class HrPayslipEdi(models.Model):
         states={"draft": [("readonly", False)]},
     )
     name = fields.Char(string="Edi Payslip Name", compute="_compute_name", store=True)
-
     # Edi fields
     date = fields.Date(
         "Date",
@@ -201,6 +200,9 @@ class HrPayslipEdi(models.Model):
         return super(HrPayslipEdi, self).unlink()
 
     def action_payslip_draft(self):
+        """
+        Sets the state of the current recordset to "draft".
+        """
         for rec in self:
             rec.write({"state": "draft"})
         return True
@@ -209,10 +211,13 @@ class HrPayslipEdi(models.Model):
         """
         Cancels the current recordset.
 
-        This function iterates over each record in the current recordset and performs the following actions:
-        1. Checks if the record's edi_is_valid flag is False. If it is, the record's state is set to "cancel".
-        2. If the record's edi_is_valid flag is True, a UserError is raised with the message
-        "You cannot cancel a electronic payroll that has already been validated to the DIAN".
+        This function iterates over each record in the current recordset 
+        and performs the following actions:
+        1. Checks if the record's edi_is_valid flag is False. 
+            If it is, the record's state is set to "cancel".
+        2. If the record's edi_is_valid flag is True, a UserError 
+            is raised with the message "You cannot cancel a electronic 
+            payroll that has already been validated to the DIAN".
 
         Parameters:
             self (Recordset): The current recordset.
@@ -234,7 +239,6 @@ class HrPayslipEdi(models.Model):
                 )
         # Return True if all records were cancelled successfully
         return True
-
 
     def compute_sheet(self):
         """
@@ -424,11 +428,12 @@ class HrPayslipEdi(models.Model):
         - Checks if the company's DIAN consolidated payroll is enabled.
         - Checks if the current record is already validated.
 
-        If any of the above conditions are not met, the validation process is skipped
-        for that record. Otherwise, the function proceeds to generate the JSON request
-        data using the `get_json_request` method of the current record. Then,
-        the `_validate_dian_generic` method is called with the generated JSON request
-        data as the argument.
+        If any of the above conditions are not met, the validation 
+        process is skipped for that record. Otherwise, the function 
+        proceeds to generate the JSON request data using the 
+        `get_json_request` method of the current record. Then, 
+        the `_validate_dian_generic` method is called with 
+        the generated JSON request data as the argument.
         """
         for rec in self:
             if (
@@ -603,10 +608,13 @@ class HrPayslipEdi(models.Model):
 
     def status_document_log(self):
         """
-        Updates the electronic fields of the payroll in Odoo before sending a request.
+        Updates the electronic fields of the payroll 
+        in Odoo before sending a request.
 
-        This function iterates over records, checks if the payroll enable flags are set,
-        and then updates the electronic fields of the payroll in Odoo using a JSON payload.
+        This function iterates over records, checks if 
+        the payroll enable flags are set, and then 
+        updates the electronic fields of the payroll 
+        in Odoo using a JSON payload.
 
         Parameters:
         - self: The object instance

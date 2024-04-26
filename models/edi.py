@@ -46,7 +46,6 @@ class Edi(models.Model):
         #     ._company_default_get()
         #     .edi_payroll_is_not_test,
     )
-
     # Edi fields
     payment_form_id = fields.Many2one(
         comodel_name="l10n_co_edi_jorels.payment_forms",
@@ -77,7 +76,6 @@ class Edi(models.Model):
         "res.currency", string="Currency", readonly=False, compute="_compute_currency"
     )
     worked_days_total = fields.Integer("Worked days", default=0)
-
     # Edi response fields
     edi_is_valid = fields.Boolean(
         string="Valid",
@@ -156,6 +154,11 @@ class Edi(models.Model):
     )
 
     def _default_edi_type_environment(self):
+        """
+        Returns the default value for the 'edi_type_environment' field.
+
+        :return: An integer representing the default value for 'edi_type_environment'.
+        """
         return (
             1
             if self.env["res.company"]._company_default_get().edi_payroll_is_not_test
@@ -163,7 +166,16 @@ class Edi(models.Model):
         )
 
     def _compute_currency(self):
+        """
+        Compute the currency for each record.
+
+        This function iterates over each record and sets its 'currency_id' field
+        to the currency of the company associated with that record.
+
+        """
+        # Iterate over each record
         for rec in self:
+            # Set the currency_id field to the currency of the company
             rec.currency_id = rec.company_id.currency_id
 
     def dian_preview(self):
@@ -222,6 +234,22 @@ class Edi(models.Model):
 
     @api.depends("edi_payload")
     def _compute_edi_payload_html(self):
+        """
+        Compute the HTML representation of the `edi_payload` field.
+
+        This method is decorated with `@api.depends("edi_payload")` 
+        to indicate that it depends on the `edi_payload` field.  
+        It iterates over each record in `self` and checks if 
+        the `edi_payload` field is not empty. If it is not empty, 
+        it tries to parse the `edi_payload` as JSON using `json.loads()` 
+        and converts it to HTML using the `payload2html()` method. If 
+        the parsing fails with a `JSONDecodeError`, it tries to evaluate 
+        the `edi_payload` using `ast.literal_eval()` and converts it to HTML.
+        If the `edi_payload` is empty, it sets `edi_payload_html` to an empty string.
+
+        Parameters:
+            self (RecordSet): The recordset containing the records to compute.
+        """
         for rec in self:
             if rec.edi_payload:
                 try:

@@ -40,7 +40,6 @@ class EarnLine(models.Model):
         store=True,
     )
     amount = fields.Float("Amount")
-
     date_start = fields.Date("Start date")
     date_end = fields.Date("End date")
     time_start = fields.Float("Start hour")

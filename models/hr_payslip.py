@@ -66,7 +66,7 @@ class HrPayslip(models.Model):
     others_total_amount = fields.Monetary(
         "Others", currency_field="currency_id", readonly=True, copy=True
     )
-    #Todo restore this code
+    # Todo restore this code
     # earn_ids = fields.One2many(
     #     "l10n_co_hr_payroll.earn.line",
     #     "payslip_id",
@@ -116,19 +116,69 @@ class HrPayslip(models.Model):
 
     @api.depends("date_from")
     def _compute_month(self):
+        """
+        Compute the month based on the date_from field.
+
+        This method iterates over each record and sets the month field
+        to the month of the date_from field. If the date_from field is
+        empty, the month field is set to None.
+        """
+        # Iterate over each record
         for rec in self:
+            # If date_from field is present, convert the month to a string
+            # and assign it to the month field, otherwise set the month
+            # field to None
             rec.month = str(rec.date_from.month) if rec.date_from else None
 
     @api.depends("date_from")
     def _compute_year(self):
+        """
+        Compute the year based on the date_from field.
+
+        This method iterates over each record and sets the year field
+        to the year of the date_from field.
+        """
+        # Iterate over each record
         for rec in self:
+            # Set the year field to the year of the date_from field
             rec.year = rec.date_from.year
 
     def _format_date_hours(self, date, hours):
+        """
+        Adds the specified number of hours to the given date and returns the formatted result.
+
+        Args:
+            date (datetime.date): The date to which the hours should be added.
+            hours (int): The number of hours to be added to the date.
+
+        Returns:
+            str: The formatted result of adding the specified number of hours to the given date.
+        """
+        # Create a new datetime object by adding the specified number of hours to the given date
         date_hours = datetime(date.year, date.month, date.day) + timedelta(hours=hours)
+
+        # Format and return the result
         return fields.Datetime.to_string(date_hours)
 
     def compute_sheet(self):
+        """
+        Compute the payslip sheet for each record in the current recordset.
+
+        This function iterates over each record in the recordset and performs the following steps:
+        1. Read all earn codes and deduction codes from the record.
+        2. Remove duplicate codes from the earn and deduction code lists.
+        3. Create a list of all earn details and a list of all deduction details.
+        4. Remove input line records with codes in the earn and deduction code lists.
+        5. Remove worked days line records with codes in the earn code list.
+        6. Prepare input lines and worked days lines based on the earn and deduction code lists.
+        7. Add the prepared input lines and worked days lines to the record.
+        8. Calculate the sheet and totals using the superclass's compute_sheet method.
+        9. Recompute the sheet and totals if the system parameter
+            'jorels.payroll.recompute_sheet' is set to 1.
+
+        Returns:
+            The result of the superclass's compute_sheet method.
+        """
         for rec in self:
             # Read all codes
             all_earn_code_list = []
@@ -227,7 +277,14 @@ class HrPayslip(models.Model):
                     "incapacities_professional",
                     "incapacities_working",
                     "legal_strikes",
-                ):
+                ): 
+                # Prepares the worked days lines. 
+                # It appends a new line to the list of worked days lines
+                # for each earn line with the specified category. 
+                # The appended line contains the name, payslip id,
+                # sequence, code, and number of days of the earn line. 
+                # The number of days is the absolute value of
+                # the quantity of the earn line.
                     worked_days_line_list.append(
                         (
                             0,
@@ -312,34 +369,71 @@ class HrPayslip(models.Model):
         return res
 
     def compute_totals(self):
+        """
+        Compute totals for payslip.
+
+        This method computes the total amount of earnings, deductions,
+        and other expenses for a payslip. It iterates over all the lines
+        of the payslip and calculates the total amount for each category.
+
+        It also sets the date of the payslip to the current date, and
+        updates the fields for the totals and the EDI payload of the
+        payslip.
+
+        """
         for rec in self:
             # The date is the sending date
             rec.date = fields.Date.context_today(self)
+
             # Totals
+            # Accrued total amount
             accrued_total_amount = 0
+            # Deductions total amount
             deductions_total_amount = 0
+            # Others total amount
             others_total_amount = 0
+
+            # Iterate over the lines of the payslip and compute the totals
             for line_id in rec.line_ids:
+                # If the line is an earning
                 if line_id.salary_rule_id.type_concept == "earn":
+                    # If the earning is not related to suspension or unpaid leaves
                     if line_id.salary_rule_id.earn_category not in (
                         "licensings_suspension_or_unpaid_leaves",
                         "legal_strikes",
                     ):
                         accrued_total_amount += abs(line_id.total)
+                # If the line is a deduction
                 elif line_id.salary_rule_id.type_concept == "deduction":
                     deductions_total_amount += abs(line_id.total)
+                # If the line is an other expense
                 elif line_id.salary_rule_id.type_concept == "other":
                     others_total_amount += abs(line_id.total)
+
+            # Update the fields for the totals
             rec.accrued_total_amount = accrued_total_amount
             rec.deductions_total_amount = deductions_total_amount
             rec.others_total_amount = others_total_amount
             rec.total_amount = accrued_total_amount - deductions_total_amount
+
+            # Update the EDI payload field
             rec.edi_payload = json.dumps(
                 rec.get_json_request(), indent=4, sort_keys=False
             )
 
     @api.model
     def calculate_time_worked(self, start, end):
+        """
+        Calculate the number of days worked between two dates.
+
+        :param start: The start date.
+        :type start: datetime.date
+        :param end: The end date.
+        :type end: datetime.date
+        :return: The number of days worked.
+        :rtype: int
+        :raises: ValidationError if the time worked is negative.
+        """
         if end < start:
             raise ValidationError(_("The time worked cannot be negative."))
         end_day = (
@@ -359,6 +453,13 @@ class HrPayslip(models.Model):
         )
 
     def get_json_request(self):
+        """
+        The function returns the JSON request data for the current
+        record. also checks if the record is valid or not.
+
+        :return: The JSON request data.
+        :rtype: dict
+        """
         for rec in self:
             if not rec.number:
                 raise UserError(
@@ -1461,20 +1562,55 @@ class HrPayslip(models.Model):
             return json_request
 
     def validate_dian_generic(self):
+        """
+        Validates the DIAN generic payroll for the current record.
+
+        This function iterates over each record in the current object and performs
+        the following validations:
+        - Checks if the company's DIAN payroll is enabled.
+        - Checks if the company's DIAN consolidated payroll is enabled.
+
+        If any of the above conditions are not met, the validation
+        process is skipped for that record. Otherwise, the function
+        proceeds to generate the JSON request data using the
+        `get_json_request` method of the current record. Then,
+        the `_validate_dian_generic` method is called with
+        the generated JSON request data as the argument.
+        """
         for rec in self:
+            # Check if DIAN payroll is enabled and consolidated payroll is not enabled
             if (
                 not rec.company_id.edi_payroll_enable
                 or rec.company_id.edi_payroll_consolidated_enable
             ):
+                # If not, skip the validation process
                 continue
+            # Generate JSON request data
             requests_data = rec.get_json_request()
+            # Call the helper method to perform the validation
             rec._validate_dian_generic(requests_data)
 
     def validate_dian(self):
+        """
+        Validates the DIAN payroll for each record in the current object.
+
+        This method iterates over each record in the current object and
+        calls the `validate_dian_generic` method to perform the validation.
+
+        """
+        # Iterate over each record in the current object
         for rec in self:
+            # Call the generic validation method
             rec.validate_dian_generic()
 
     def action_payslip_done(self):
+        """
+        Marks the payslip as done by generating a number based on certain conditions.
+        If the number is not set or is equal to "New", a new number is generated.
+        Handles credit notes by assigning the appropriate sequence number.
+        Validates the payslip if specific company flags are set.
+        Returns the result of the superclass action_payslip_done method.
+        """
         for rec in self:
             if not rec.number or rec.number in ("New", _("New")):
                 if rec.credit_note:
@@ -1500,17 +1636,64 @@ class HrPayslip(models.Model):
         return res
 
     def status_zip(self):
+        """
+        This method iterates over each record in the current recordset and performs
+        the following actions:
+        1. Checks if the company's DIAN payroll is enabled and consolidated payroll is not enabled.
+        2. If both conditions are met, it ensures that the electronic fields of the payroll
+        are updated in Odoo, before the request.
+        3. Calls the helper method _status_zip with the generated JSON request data.
+        """
         for rec in self:
+            # Check if DIAN payroll is enabled and consolidated payroll is not enabled
             if (
                 not rec.company_id.edi_payroll_enable
                 or rec.company_id.edi_payroll_consolidated_enable
             ):
+                # If not, skip the status_zip process
                 continue
-            # This line ensures that the electronic fields of the payroll are updated in Odoo, before the request
+            # This line ensures that the electronic fields of the payroll
+            # are updated in Odoo, before the request.
+            # Generate JSON request data
             payload = json.dumps(rec.get_json_request(), indent=2, sort_keys=False)
+            # Call the helper method to perform the status_zip
             rec._status_zip(payload)
 
     def refund_sheet(self):
+        """
+        Creates a refund payslip based on the current payslip.
+
+        This function creates a refund payslip by copying the current payslip
+        and setting the 'credit_note' field to True. It also updates the name,
+        origin_payslip_id, and number fields of the refund payslip.
+        The refund payslip is then marked as 'done' by calling the
+        'action_payslip_done' method.
+
+        If the current payslip has an 'edi_payload' field and the refund
+        payslip does not have an 'edi_payload' field, the function generates
+        the JSON request payload for the refund payslip and writes it to the
+        'edi_payload' field.
+
+        The function returns an action window dictionary that specifies
+        the parameters for opening a window displaying the refund payslip.
+        The 'name' field specifies the title of the window. The 'view_mode'
+        field specifies the display mode of the window as 'tree, form'.
+        The 'view_id' field is set to False. The 'view_type' field specifies
+        the type of the view as 'form'. The 'res_model' field specifies
+        the model of the records to be displayed in the window as 'hr.payslip'.
+        The 'type' field specifies the type of the action as
+        'ir.actions.act_window'. The 'target' field specifies the target of the action
+        as 'current'. The 'domain' field specifies the domain for filtering the records
+        to be displayed in the window. The 'views' field specifies the views to be used
+        for displaying the records in the window. The 'context'
+        field is an empty dictionary.
+
+        Parameters:
+        - self: The object instance.
+
+        Returns:
+        - An action window dictionary.
+        """
         # The following line is commented, because if applied, the sequence is incorrectly calculated
         # and the relationship to the original payroll would not be taken by default
         # res = super(HrPayslip, self).refund_sheet()
@@ -1559,13 +1742,29 @@ class HrPayslip(models.Model):
         }
 
     def status_document_log(self):
+        """
+        This method updates the electronic fields of the payroll in Odoo
+        before requesting the status document log.
+
+        It is important to note that this method only updates the electronic
+        fields if the company has enabled the EDI payroll feature and the
+        consolidated feature is enabled.
+        """
+        # Iterate over each record
         for rec in self:
+            # If the company has not enabled the EDI payroll feature or
+            # the consolidated feature is disabled, skip to the next record
             if (
                 not rec.company_id.edi_payroll_enable
                 or rec.company_id.edi_payroll_consolidated_enable
             ):
                 continue
-            # This line ensures that the electronic fields of the payroll are updated in Odoo,
-            # before the request
+
+            # Update the electronic fields of the payroll in Odoo
+            # before requesting the status document log
+            # This line ensures that the electronic fields of the payroll are updated
+            # in Odoo, before the request
             payload = rec.get_json_request()
+
+            # Call the _status_document_log method, passing the payload
             rec._status_document_log(payload)
