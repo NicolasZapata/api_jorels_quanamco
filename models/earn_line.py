@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-#   l10n_co_hr_payroll
+#   Payroll_Dataico
 #   Copyright (C) 2022  Jorels SAS
 #
 #   This program is free software: you can redistribute it and/or modify
